@@ -1,5 +1,5 @@
 
-package assignment03.pt1.pt1
+package assignment03.pt1
 
 import CustomException.NullVectorException
 import P2d.P2d

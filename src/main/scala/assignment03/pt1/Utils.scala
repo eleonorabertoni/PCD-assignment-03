@@ -1,7 +1,7 @@
-package assignment03.pt1.pt1
+package assignment03.pt1
 
-import assignment03.pt1.pt1.Body.Body
-import assignment03.pt1.pt1.V2d.V2d
+import Body.Body
+import V2d.V2d
 import Body.Body
 import V2d.V2d
 

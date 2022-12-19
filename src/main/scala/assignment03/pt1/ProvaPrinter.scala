@@ -1,4 +1,4 @@
-package assignment03.pt1.pt1
+package assignment03.pt1
 
 import akka.actor.typed.{ActorRef, ActorSystem, Behavior, Scheduler}
 import akka.actor.typed.scaladsl.Behaviors

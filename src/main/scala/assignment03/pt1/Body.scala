@@ -1,7 +1,7 @@
-package assignment03.pt1.pt1
+package assignment03.pt1
 
-import assignment03.pt1.pt1.P2d.P2d
-import assignment03.pt1.pt1.V2d.V2d
+import P2d.P2d
+import V2d.V2d
 import CustomException.InfiniteForceException
 import P2d.P2d
 import V2d.V2d

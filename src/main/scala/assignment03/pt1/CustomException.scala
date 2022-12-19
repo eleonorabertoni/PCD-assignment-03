@@ -1,4 +1,4 @@
-package assignment03.pt1.pt1
+package assignment03.pt1
 
 object CustomException:
   case class NullVectorException() extends Exception
