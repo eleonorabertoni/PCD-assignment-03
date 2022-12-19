@@ -10,6 +10,7 @@ import it.unibo.pcd.akka.basics.e06interaction.HelloBehavior.{Greet, Greeted}
 import akka.actor.typed.scaladsl.AskPattern.Askable
 import Body.Body
 import V2d.V2d
+import assignment03.pt1.GUI.SimulationView
 
 import concurrent.duration.DurationInt
 import scala.concurrent.{ExecutionContext, Future}
@@ -71,6 +72,7 @@ object TestProvaFuture extends App:
   val N_ACTORS: Int = 4 //?
   val N_BODY: Int = 10
   val N_ITERATIONS: Int = 10_000
+  val v = new SimulationView(800,800)
 
   // TODO ACTOR SYSTEM
   val system: ActorSystem[API] = ActorSystem(
