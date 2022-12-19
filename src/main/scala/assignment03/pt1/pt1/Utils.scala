@@ -1,7 +1,9 @@
-package it.unibo.pcd.akka.basics.pt1
+package assignment03.pt1.pt1
 
-import it.unibo.pcd.akka.basics.pt1.Body.Body
-import it.unibo.pcd.akka.basics.pt1.V2d.V2d
+import assignment03.pt1.pt1.Body.Body
+import assignment03.pt1.pt1.V2d.V2d
+import Body.Body
+import V2d.V2d
 
 import scala.util.Random
 

@@ -1,4 +1,4 @@
-package it.unibo.pcd.akka.basics.pt1
+package assignment03.pt1.pt1
 
 import akka.actor.typed.{ActorRef, ActorSystem, Behavior, Scheduler}
 import akka.actor.typed.scaladsl.Behaviors
@@ -8,8 +8,8 @@ import it.unibo.pcd.akka.basics.e01hello.Counter.Command
 import it.unibo.pcd.akka.basics.e01hello.Counter.Command.Tick
 import it.unibo.pcd.akka.basics.e06interaction.HelloBehavior.{Greet, Greeted}
 import akka.actor.typed.scaladsl.AskPattern.Askable
-import it.unibo.pcd.akka.basics.pt1.Body.Body
-import it.unibo.pcd.akka.basics.pt1.V2d.V2d
+import Body.Body
+import V2d.V2d
 
 import concurrent.duration.DurationInt
 import scala.concurrent.{ExecutionContext, Future}
