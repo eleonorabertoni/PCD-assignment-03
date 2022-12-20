@@ -43,6 +43,7 @@ public class SimulationView {
 
     public void setBodies(ArrayList<Body> bodies){
         this.bodies = bodies;
+        System.out.println(bodies);
     }
 
     public void setBounds(Boundary bounds){
@@ -142,7 +143,6 @@ public class SimulationView {
                 g2.setRenderingHint(RenderingHints.KEY_RENDERING,
                         RenderingHints.VALUE_RENDER_QUALITY);
                 g2.clearRect(0,0,this.getWidth(),this.getHeight());
-
 
                 int x0 = getXcoord(bounds.x0());
                 int y0 = getYcoord(bounds.y0());
