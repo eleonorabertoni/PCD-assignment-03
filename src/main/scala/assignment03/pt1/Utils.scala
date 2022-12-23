@@ -2,8 +2,9 @@ package assignment03.pt1
 
 import Body.Body
 import V2d.V2d
-import Body.Body
-import V2d.V2d
+import akka.actor.typed.ActorRef
+import akka.actor.typed.scaladsl.Behaviors
+import assignment03.pt1.ProvaBody.API.*
 
 import scala.util.Random
 

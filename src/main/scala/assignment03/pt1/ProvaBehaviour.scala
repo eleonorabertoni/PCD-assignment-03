@@ -10,6 +10,7 @@ import it.unibo.pcd.akka.basics.e06interaction.HelloBehavior.{Greet, Greeted}
 import akka.actor.typed.scaladsl.AskPattern.Askable
 import Body.Body
 import V2d.V2d
+import Behaviour.behaviourReceive
 import assignment03.pt1.GUI.SimulationView
 
 import java.util
@@ -28,7 +29,7 @@ import scala.util.{Random, Success}
  */
 import Utils.computeTotalForceOnBody
 
-object ProvaBody:
+object ProvaBehaviour:
   enum API:
     case UpdateGUI(vt: Double, currentIteration:Int, bodies: Seq[Body], bounds: Boundary, from: ActorRef[Msg])
     //case Velocity(bodies: Seq[Body], to:ActorRef[Messaged])
@@ -104,12 +105,13 @@ object ProvaBody:
 
 
 
-import ProvaBody.*
+import ProvaBehaviour.*
 import Utils.createBodies
-object TestProvaBody extends App:
+
+object TestProvaBehaviour extends App:
   val N_BODY: Int = 100
   val N_ACTORS: Int =  20//?
-  val N_ITERATIONS: Int = 500
+  val N_ITERATIONS: Int = 100
   val dim: Int = 2
 
   // TODO ACTOR SYSTEM
@@ -128,50 +130,18 @@ object TestProvaBody extends App:
         val simulationSize = 800
         val view = SimulationView(simulationSize, simulationSize)
         setStopHandler(a => { system ! API.Stop })
-        setStartHandler(a => { system ! API.Start()})
+        setStartHandler(a => {
+          system ! API.Start()
+        })
 
         //println(bodies)
         var arrivati: Int = 0
         var vt: Double = 0
 
         for i <- 0 until N_ACTORS do actors = actors :+ ctx.spawn(Messager(bodies.size * i / N_ACTORS, bodies.size * (i + 1) / N_ACTORS, bounds, DT), "printer" + i)
-        val viewer = ctx.spawn(Viewer(bodies, bounds,view), "viewer")
+        val viewer = ctx.spawn(Viewer(bodies.toList, bounds,view), "viewer")
 
-        Behaviors.receiveMessage{
-          case API.Msg("Inizio", _, _) =>
-            for a <- actors do a ! API.Msg("Velocity", bodies.toList, ctx.self)
-            Behaviors.same
-          case API.Messaged("Velocity", start, end, bodiesToUpdate, msg) => // TODO HO FINITO VEL
-            bodies = bodies map {b => if b.id >= start && b.id < end then bodiesToUpdate.filter(body => body.id == b.id).head else b} // TODO ???
-            arrivati = arrivati + 1
-            if(arrivati == N_ACTORS)
-              arrivati = 0
-              for a <- actors do a ! API.Msg("Position", bodies.toList, ctx.self)
-            Behaviors.same
-          case API.Messaged("Position", start, end, bodiesToUpdate, msg) =>
-            bodies = bodies map {b => if b.id >= start && b.id < end then bodiesToUpdate.filter(body => body.id == b.id).head else b}
-            arrivati = arrivati + 1
-            if(arrivati == N_ACTORS)
-              arrivati = 0
-              vt = vt + DT
-              currentIteration = currentIteration + 1
-              if (currentIteration < N_ITERATIONS)
-                //println(currentIteration)
-                viewer ! API.UpdateGUI(vt, currentIteration, bodies.toList, bounds, ctx.self)
-                //for a <- actors do a ! API.Msg("Velocity", bodies.toList, ctx.self) // TODO ???
-              else Behaviors.stopped
-            // TODO UCCIDI I FIGLI PERCHè IL PROGRAMMA NON SE FERMA DA SOLO
-            Behaviors.same
-          case API.Stop =>
-            Behaviors.setup[API](ctx =>
-              Behaviors.receiveMessage{
-                case API.Start() => Behaviors.same
-                case _ => Behaviors.same
-              }
-
-            )
-
-      }
+        behaviourReceive(bounds, actors, bodies.toList,viewer, N_ACTORS, N_ITERATIONS, ctx)
     },
     name = "hello-world"
   )
