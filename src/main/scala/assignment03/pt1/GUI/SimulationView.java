@@ -43,7 +43,6 @@ public class SimulationView {
 
     public void setBodies(ArrayList<Body> bodies){
         this.bodies = bodies;
-        System.out.println(bodies);
     }
 
     public void setBounds(Boundary bounds){

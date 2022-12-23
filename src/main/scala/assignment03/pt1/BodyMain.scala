@@ -15,6 +15,4 @@ object BodyMain extends App:
   var currentIteration: Int = 0
   val bounds: Boundary = Boundary(-dim, -dim, dim, dim)
   var bodies: Seq[Body] = createBodies(N_BODY, bounds)
-  println(bodies(0))
   bodies(0).updatePos(200000)
-  println(bodies(0))
