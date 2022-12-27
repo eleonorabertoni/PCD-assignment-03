@@ -1,10 +1,11 @@
 package assignment03.pt1.GUI
 
 import assignment03.pt1
-import assignment03.pt1.Body.Body
-import assignment03.pt1.{Boundary, P2d, V2d}
-import assignment03.pt1.Utils.createBodies
+import assignment03.pt1.main.Body.Body
+import assignment03.pt1.main.V2d.V2d
+import assignment03.pt1.main.Utils.createBodies
 import assignment03.pt1.GUI.SimulationView.VisualiserFrame.setStartHandler
+import assignment03.pt1.main.Boundary
 
 import java.util
 

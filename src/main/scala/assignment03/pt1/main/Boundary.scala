@@ -1,4 +1,4 @@
-package assignment03.pt1
+package assignment03.pt1.main
 
 trait Boundary:
   def x0: Int

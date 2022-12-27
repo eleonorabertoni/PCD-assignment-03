@@ -4,9 +4,9 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import javax.swing.*;
-import assignment03.pt1.Body.*;
-import assignment03.pt1.Boundary;
-import assignment03.pt1.P2d.*;
+import assignment03.pt1.main.Body.*;
+import assignment03.pt1.main.Boundary;
+import assignment03.pt1.main.P2d.*;
 
 /**
  * Simulation view
