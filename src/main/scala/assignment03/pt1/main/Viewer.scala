@@ -24,6 +24,6 @@ object Viewer:
         view.setBodies(bodiesJ)
         view.setBounds(bounds_s)
         view.display(vt, it)
-        from ! API.Msg("Inizio", Seq(), null) // TODO NON CI VA NULL
+        from ! API.Msg("Inizio", Seq(), null)
         Behaviors.same
     }

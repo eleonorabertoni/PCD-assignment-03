@@ -35,7 +35,6 @@ object Behaviour:
             if (data.currentIteration < N_ITERATIONS)
               viewer ! API.UpdateGUI(data.vt, data.currentIteration, bodies, bounds, ctx.self)
             else Behaviors.stopped
-          // TODO UCCIDI I FIGLI PERCHè IL PROGRAMMA NON SE FERMA DA SOLO
           Behaviors.same
         case API.Stop =>
           Behaviors.setup[API](ctx =>
@@ -47,7 +46,7 @@ object Behaviour:
             }
           )
         case API.Start() =>
-          // TODO QUELLE LONTANE CONTINUANO
+          // TODO bug
           for a <- actors do a ! API.Msg("Velocity", initialBodies, ctx.self)
           behaviourReceive()
 
