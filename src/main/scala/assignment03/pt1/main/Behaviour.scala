@@ -20,15 +20,15 @@ object Behaviour:
         case API.Msg("Inizio", _, _) =>
           for a <- actors do a ! API.Msg("Velocity", bodies, ctx.self)
           Behaviors.same
-        case API.Messaged("Velocity", start, end, bodiesToUpdate, msg) =>
-          bodies = updateBodies(bodies, bodiesToUpdate, start, end)
+        case API.Messaged("Velocity", bodiesToUpdate, msg) =>
+          bodies = updateBodies(bodies, bodiesToUpdate)
           data = data.copy(DT = DT, arrived = data.arrived + 1)
           if (data.arrived == N_ACTORS)
             data = data.copy(DT = DT, arrived = 0)
             for a <- actors do a ! API.Msg("Position", bodies, ctx.self)
           Behaviors.same
-        case API.Messaged("Position", start, end, bodiesToUpdate, msg) =>
-          bodies = updateBodies(bodies, bodiesToUpdate, start, end)
+        case API.Messaged("Position", bodiesToUpdate, msg) =>
+          bodies = updateBodies(bodies, bodiesToUpdate)
           data = data.copy(DT = DT, arrived = data.arrived + 1)
           if (data.arrived == N_ACTORS)
             data = data.copy(DT = DT, arrived = 0, vt = data.vt + data.DT, currentIteration = data.currentIteration + 1)
@@ -41,7 +41,6 @@ object Behaviour:
           Behaviors.setup[API](ctx =>
             Behaviors.receiveMessage {
               case API.Start() =>
-
                 for a <- actors do a ! API.Msg("Velocity", initialBodies, ctx.self)
                 behaviourReceive()
               case _ => Behaviors.same
@@ -54,5 +53,6 @@ object Behaviour:
 
       }
 
-    def updateBodies(bodies: Seq[Body], bodiesToUpdate: Seq[Body], start: Int, end: Int): Seq[Body] =
-      bodies map { b => if b.id >= start && b.id < end then bodiesToUpdate.filter(body => body.id == b.id).head else b }
+    def updateBodies(bodies: Seq[Body], bodiesToUpdate: Seq[Body]): Seq[Body] =
+      bodies map { b => if bodiesToUpdate.contains(b) then bodiesToUpdate.find(b1 => b1.id == b.id).get else b}
+      //bodies map { b => if b.id >= start && b.id < end then bodiesToUpdate.filter(body => body.id == b.id).head else b }
