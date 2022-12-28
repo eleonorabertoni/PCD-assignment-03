@@ -6,7 +6,7 @@ import assignment03.pt1.main.API.API
 import assignment03.pt1.main.Body.Body
 import assignment03.pt1.main.Boundary
 
-object Behaviour:
+object ReceiveBehaviour:
   case class IterationData(DT: Double, arrived: Int = 0, vt: Double = 0, currentIteration: Int = 0)
 
   class ReceiveBehaviour(bounds: Boundary, actors: Seq[ActorRef[API.Msg]], val initialBodies: Seq[Body], viewer: ActorRef[API.UpdateGUI], N_ITERATIONS: Int, ctx: ActorContext[API]):

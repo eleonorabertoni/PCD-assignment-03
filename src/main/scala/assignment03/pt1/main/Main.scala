@@ -49,7 +49,7 @@ object Main extends App:
         for i <- 0 until N_ACTORS do actors = actors :+ ctx.spawn(Messenger(bodies.size * i / N_ACTORS, bodies.size * (i + 1) / N_ACTORS, bounds, DT), "printer" + i)
         val viewer = ctx.spawn(Viewer(bodies.toList, bounds,view), "viewer")
 
-        Behaviour.ReceiveBehaviour(bounds, actors, bodies.toList, viewer, N_ITERATIONS, ctx).behaviourReceive()
+        ReceiveBehaviour.ReceiveBehaviour(bounds, actors, bodies.toList, viewer, N_ITERATIONS, ctx).behaviourReceive()
     },
     name = "hello-world"
   )
