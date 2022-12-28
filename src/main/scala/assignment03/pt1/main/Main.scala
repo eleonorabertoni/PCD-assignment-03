@@ -23,8 +23,8 @@ import assignment03.pt1.main.Utils.createBodies
 
 object Main extends App:
   val N_BODY: Int = 500
-  val N_ACTORS: Int =  50
-  val N_ITERATIONS: Int = 300
+  val N_ACTORS: Int =  8
+  val N_ITERATIONS: Int = 3000
   val dim: Int = 2
 
   val system: ActorSystem[API] = ActorSystem(

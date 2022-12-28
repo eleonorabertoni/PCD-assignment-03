@@ -36,6 +36,7 @@ object ReceiveBehaviour:
               viewer ! API.UpdateGUI(data.vt, data.currentIteration, bodies, bounds, ctx.self)
             else Behaviors.stopped
           Behaviors.same
+        /*
         case API.Stop =>
           Behaviors.setup[API](ctx =>
             Behaviors.receiveMessage {
@@ -45,9 +46,11 @@ object ReceiveBehaviour:
               case _ => Behaviors.same
             }
           )
+        */
         case API.Start() =>
           // TODO bug
           for a <- actors do a ! API.Msg("Velocity", initialBodies, ctx.self)
+          println(bodies.maxBy(b => b.pos.x))
           behaviourReceive()
 
       }

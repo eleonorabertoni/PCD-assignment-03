@@ -132,21 +132,19 @@ object Body:
      */
     def checkAndSolveBoundaryCollision(bounds: Boundary): Body =
       def changePos(x: Double, y: Double): Body = copy(pos = pos.change(x, y))
-
       val x = pos.x
       val y = pos.y
+      var body: Body = copy()
 
       if (x > bounds.x1) {
-        changePos(bounds.x1, pos.y).changeVel(-vel.x, vel.y)
+        body = changePos(bounds.x1, pos.y).changeVel(-vel.x, vel.y)
       } else if (x < bounds.x0) {
-        changePos(bounds.x0, pos.y)
-        changeVel(-vel.x, vel.y)
+        body = changePos(bounds.x0, pos.y).changeVel(-vel.x, vel.y)
       }
       if (y > bounds.y1) {
-        changePos(pos.x, bounds.y1)
-        changeVel(vel.x, -vel.y)
+        body = changePos(pos.x, bounds.y1).changeVel(vel.x, -vel.y)
       } else if (y < bounds.y0) {
-        changePos(pos.x, bounds.y0)
-        changeVel(vel.x, -vel.y)
+        body = changePos(pos.x, bounds.y0).changeVel(vel.x, -vel.y)
       }
-      this
+      body
+
