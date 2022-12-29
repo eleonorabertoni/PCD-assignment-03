@@ -9,7 +9,8 @@ import scala.util.Random
 
 object Utils:
 
-  def computeTotalForceOnBody(b: Body, bodies: Seq[Body]): V2d =
+  def computeTotalForceOnBody(b: Body, bodies: Array[Body]): V2d =
+    //val temp = bodies.toArray
     var totalForce: V2d = V2d(0, 0)
     for j <- 0 until bodies.size do
       val otherBody: Body = bodies(j)
@@ -24,9 +25,9 @@ object Utils:
     /* add friction force */
     totalForce.sum(b.getCurrentFrictionForce)
 
-  def createBodies(nBodies: Int, bounds: Boundary): Seq[Body] =
+  def createBodies(nBodies: Int, bounds: Boundary): Array[Body] =
     val rand: Random = Random(999)
-    var bodies: Seq[Body] = List.empty
+    var bodies: Array[Body] = Array()
     for i <- 0 until nBodies do
       val x: Double = bounds.x0 * 0.25 + rand.nextDouble() * (bounds.x1 - bounds.x0) * 0.25
       val y: Double = bounds.y0 * 0.25 + rand.nextDouble() * (bounds.y1 - bounds.y0) * 0.25

@@ -22,8 +22,8 @@ import scala.util.{Random, Success}
 import assignment03.pt1.main.Utils.createBodies
 
 object Main extends App:
-  val N_BODY: Int = 500
-  val N_ACTORS: Int =  8
+  val N_BODY: Int = 1000
+  val N_ACTORS: Int =  10
   val N_ITERATIONS: Int = 3000
   val dim: Int = 2
 
@@ -33,8 +33,8 @@ object Main extends App:
         val DT: Double = 0.001
         var currentIteration: Int = 0
         val bounds: Boundary = Boundary(-dim, -dim, dim, dim)
-        var actors: Seq[ActorRef[API.Msg]] = List.empty
-        val bodies: Seq[Body] = createBodies(N_BODY, bounds)
+        var actors: Array[ActorRef[API.Msg]] = Array()
+        val bodies: Array[Body] = createBodies(N_BODY, bounds)
 
         import assignment03.pt1.GUI.SimulationView.VisualiserFrame.{setStartHandler, setStopHandler}
 
@@ -46,16 +46,16 @@ object Main extends App:
           system ! API.Start()
         })
 
-        for i <- 0 until N_ACTORS do actors = actors :+ ctx.spawn(Messenger(bodies.size * i / N_ACTORS, bodies.size * (i + 1) / N_ACTORS, bounds, DT), "printer" + i)
-        val viewer = ctx.spawn(Viewer(bodies.toList, bounds,view), "viewer")
+        for i <- 0 until N_ACTORS do actors = actors :+ ctx.spawn(Messenger(bodies.length * i / N_ACTORS, bodies.length * (i + 1) / N_ACTORS, bounds, DT), "printer" + i)
+        val viewer = ctx.spawn(Viewer(bodies, bounds,view), "viewer")
 
-        ReceiveBehaviour.ReceiveBehaviour(bounds, actors, bodies.toList, viewer, N_ITERATIONS, ctx).behaviourReceive()
+        ReceiveBehaviour.ReceiveBehaviour(bounds, actors, bodies, viewer, N_ITERATIONS, ctx).behaviourReceive()
     },
     name = "hello-world"
   )
 
 
-  system ! API.Msg("Inizio", Seq(), system.ignoreRef)
+  system ! API.Msg("Inizio", Array(), system.ignoreRef)
 
 
 

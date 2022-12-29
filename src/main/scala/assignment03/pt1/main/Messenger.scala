@@ -11,7 +11,7 @@ object Messenger:
   def apply(start: Int, end: Int, bounds: Boundary, DT:Double): Behavior[API.Msg] = Behaviors.receive {
 
     case (ctx, API.Msg("Velocity", bodies, repl)) =>
-      var bodiesToUpdate: Seq[Body] = List.empty
+      var bodiesToUpdate: Array[Body] = Array()
       for i <- start until end do
         val b = bodies(i)
         val totalForce = computeTotalForceOnBody(b, bodies)
@@ -21,7 +21,7 @@ object Messenger:
       Behaviors.same
 
     case (ctx, API.Msg("Position", bodies, repl)) =>
-      var bodiesToUpdate: Seq[Body] = List.empty
+      var bodiesToUpdate: Array[Body] = Array()
       for i <- start until end do
         val b = bodies(i)
         bodiesToUpdate = bodiesToUpdate :+ b.updatePos(DT).checkAndSolveBoundaryCollision(bounds)

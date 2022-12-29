@@ -10,12 +10,12 @@ import java.util
 
 object Viewer:
 
-  private def toJava(bodies: Seq[Body]): util.ArrayList[Body] =
+  private def toJava(bodies: Array[Body]): util.ArrayList[Body] =
     val temp = util.ArrayList[Body]()
     for b <- bodies do temp.add(b)
     temp
 
-  def apply(bodies: Seq[Body], bounds: Boundary, view: SimulationView): Behavior[API] =
+  def apply(bodies: Array[Body], bounds: Boundary, view: SimulationView): Behavior[API] =
     var bodiesJ: util.ArrayList[Body] = toJava(bodies)
 
     Behaviors.receive{
@@ -24,6 +24,6 @@ object Viewer:
         view.setBodies(bodiesJ)
         view.setBounds(bounds_s)
         view.display(vt, it)
-        from ! API.Msg("Inizio", Seq(), null)
+        from ! API.Msg("Inizio", Array(), null)
         Behaviors.same
     }

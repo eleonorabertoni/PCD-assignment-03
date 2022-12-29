@@ -9,7 +9,7 @@ import assignment03.pt1.main.Boundary
 object ReceiveBehaviour:
   case class IterationData(DT: Double, arrived: Int = 0, vt: Double = 0, currentIteration: Int = 0)
 
-  class ReceiveBehaviour(bounds: Boundary, actors: Seq[ActorRef[API.Msg]], val initialBodies: Seq[Body], viewer: ActorRef[API.UpdateGUI], N_ITERATIONS: Int, ctx: ActorContext[API]):
+  class ReceiveBehaviour(bounds: Boundary, actors: Seq[ActorRef[API.Msg]], val initialBodies: Array[Body], viewer: ActorRef[API.UpdateGUI], N_ITERATIONS: Int, ctx: ActorContext[API]):
     val DT = 0.001
     val N_ACTORS: Int = actors.size
 
@@ -55,6 +55,6 @@ object ReceiveBehaviour:
 
       }
 
-    def updateBodies(bodies: Seq[Body], bodiesToUpdate: Seq[Body]): Seq[Body] =
+    def updateBodies(bodies: Array[Body], bodiesToUpdate: Array[Body]): Array[Body] =
       bodies map { b => if bodiesToUpdate.contains(b) then bodiesToUpdate.find(b1 => b1.id == b.id).get else b}
       //bodies map { b => if b.id >= start && b.id < end then bodiesToUpdate.filter(body => body.id == b.id).head else b }
