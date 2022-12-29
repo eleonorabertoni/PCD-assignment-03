@@ -28,6 +28,4 @@ object Messenger:
       repl ! API.Messaged("Position", bodiesToUpdate, ctx.self)
       Behaviors.same
 
-    case (ctx, msg) => Behaviors.same //TODO
-
   }

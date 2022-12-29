@@ -24,7 +24,7 @@ import assignment03.pt1.main.Utils.createBodies
 object Main extends App:
   val N_BODY: Int = 1000
   val N_ACTORS: Int =  10
-  val N_ITERATIONS: Int = 3000
+  val N_ITERATIONS: Int = 200
   val dim: Int = 2
 
   val system: ActorSystem[API] = ActorSystem(
@@ -43,7 +43,7 @@ object Main extends App:
         val view = SimulationView(simulationSize, simulationSize)
         setStopHandler(a => { system ! API.Stop })
         setStartHandler(a => {
-          system ! API.Start()
+          system ! API.Start
         })
 
         for i <- 0 until N_ACTORS do actors = actors :+ ctx.spawn(Messenger(bodies.length * i / N_ACTORS, bodies.length * (i + 1) / N_ACTORS, bounds, DT), "printer" + i)
@@ -54,8 +54,6 @@ object Main extends App:
     name = "hello-world"
   )
 
-
-  system ! API.Msg("Inizio", Array(), system.ignoreRef)
 
 
 

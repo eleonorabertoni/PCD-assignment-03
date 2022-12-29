@@ -1,6 +1,6 @@
 package assignment03.pt1.main
 
-import akka.actor.typed.ActorRef
+import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import assignment03.pt1.main.API.API
 import assignment03.pt1.main.Body.Body
@@ -16,45 +16,53 @@ object ReceiveBehaviour:
     def behaviourReceive(): Behaviors.Receive[API] =
       var data = IterationData(DT)
       var bodies = initialBodies
+      var startRequest = false
+      var behaviour: Behavior[API] = Behaviors.same
+      for a <- actors do a ! API.Msg("Velocity", bodies, ctx.self)
+
       Behaviors.receiveMessage {
         case API.Msg("Inizio", _, _) =>
           for a <- actors do a ! API.Msg("Velocity", bodies, ctx.self)
-          Behaviors.same
+          behaviour
         case API.Messaged("Velocity", bodiesToUpdate, msg) =>
           bodies = updateBodies(bodies, bodiesToUpdate)
           data = data.copy(DT = DT, arrived = data.arrived + 1)
           if (data.arrived == N_ACTORS)
             data = data.copy(DT = DT, arrived = 0)
-            for a <- actors do a ! API.Msg("Position", bodies, ctx.self)
-          Behaviors.same
+            if startRequest then
+              startRequest = false
+              behaviour = behaviourReceive()
+            else
+              for a <- actors do a ! API.Msg("Position", bodies, ctx.self)
+          behaviour
         case API.Messaged("Position", bodiesToUpdate, msg) =>
           bodies = updateBodies(bodies, bodiesToUpdate)
           data = data.copy(DT = DT, arrived = data.arrived + 1)
           if (data.arrived == N_ACTORS)
             data = data.copy(DT = DT, arrived = 0, vt = data.vt + data.DT, currentIteration = data.currentIteration + 1)
             if (data.currentIteration < N_ITERATIONS)
-              viewer ! API.UpdateGUI(data.vt, data.currentIteration, bodies, bounds, ctx.self)
+              if startRequest then
+                startRequest = false
+                behaviour = behaviourReceive()
+              else
+                viewer ! API.UpdateGUI(data.vt, data.currentIteration, bodies, bounds, ctx.self)
             else Behaviors.stopped
-          Behaviors.same
-        /*
+          behaviour
         case API.Stop =>
           Behaviors.setup[API](ctx =>
             Behaviors.receiveMessage {
-              case API.Start() =>
-                for a <- actors do a ! API.Msg("Velocity", initialBodies, ctx.self)
-                behaviourReceive()
-              case _ => Behaviors.same
+              case API.Start => behaviourReceive()
+              case _ => behaviour
             }
           )
-        */
-        case API.Start() =>
-          // TODO bug
-          for a <- actors do a ! API.Msg("Velocity", initialBodies, ctx.self)
-          println(bodies.maxBy(b => b.pos.x))
-          behaviourReceive()
+        case API.Start =>
+          if data.currentIteration == N_ITERATIONS then
+            behaviour = behaviourReceive()
+          startRequest = true
+          behaviour
+
 
       }
 
     def updateBodies(bodies: Array[Body], bodiesToUpdate: Array[Body]): Array[Body] =
       bodies map { b => if bodiesToUpdate.contains(b) then bodiesToUpdate.find(b1 => b1.id == b.id).get else b}
-      //bodies map { b => if b.id >= start && b.id < end then bodiesToUpdate.filter(body => body.id == b.id).head else b }

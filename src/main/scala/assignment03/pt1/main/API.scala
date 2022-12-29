@@ -9,5 +9,5 @@ object API:
     case UpdateGUI(vt: Double, currentIteration: Int, bodies: Array[Body], bounds: Boundary, from: ActorRef[Msg])
     case Msg(whom: String, bodies: Array[Body], to: ActorRef[Messaged])
     case Messaged(whom: String, bodiesToUpdate: Array[Body], from: ActorRef[Msg])
-    case Start()
+    case Start
     case Stop

@@ -10,7 +10,6 @@ import scala.util.Random
 object Utils:
 
   def computeTotalForceOnBody(b: Body, bodies: Array[Body]): V2d =
-    //val temp = bodies.toArray
     var totalForce: V2d = V2d(0, 0)
     for j <- 0 until bodies.size do
       val otherBody: Body = bodies(j)
@@ -22,7 +21,6 @@ object Utils:
           case ex: Exception => Exception()
         }
       }
-    /* add friction force */
     totalForce.sum(b.getCurrentFrictionForce)
 
   def createBodies(nBodies: Int, bounds: Boundary): Array[Body] =
