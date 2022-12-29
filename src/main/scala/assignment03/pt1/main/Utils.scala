@@ -12,6 +12,7 @@ object Utils:
   val VEL: String = "Velocity"
   val POS: String = "Position"
   val START: String = "Start!"
+  val STOP: String = "Stop!"
 
   def computeTotalForceOnBody(b: Body, bodies: Array[Body]): V2d =
     var totalForce: V2d = V2d(0, 0)

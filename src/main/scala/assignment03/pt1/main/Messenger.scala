@@ -4,7 +4,7 @@ import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors
 import assignment03.pt1.main.API.API
 import assignment03.pt1.main.Body.Body
-import assignment03.pt1.main.Utils.{POS, VEL, computeTotalForceOnBody}
+import assignment03.pt1.main.Utils.{POS, STOP, VEL, computeTotalForceOnBody}
 
 object Messenger:
 
@@ -27,5 +27,9 @@ object Messenger:
         bodiesToUpdate = bodiesToUpdate :+ b.updatePos(DT).checkAndSolveBoundaryCollision(bounds)
       repl ! API.Messaged(POS, bodiesToUpdate, ctx.self)
       Behaviors.same
+
+    case (ctx, API.Msg(STOP, _, _)) =>
+      println("boh")
+      Behaviors.stopped
 
   }
