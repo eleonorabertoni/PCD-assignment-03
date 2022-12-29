@@ -9,6 +9,10 @@ import scala.util.Random
 
 object Utils:
 
+  val VEL: String = "Velocity"
+  val POS: String = "Position"
+  val START: String = "Start!"
+
   def computeTotalForceOnBody(b: Body, bodies: Array[Body]): V2d =
     var totalForce: V2d = V2d(0, 0)
     for j <- 0 until bodies.size do

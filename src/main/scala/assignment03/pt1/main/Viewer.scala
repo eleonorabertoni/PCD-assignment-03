@@ -5,6 +5,7 @@ import akka.actor.typed.scaladsl.Behaviors
 import assignment03.pt1.GUI.SimulationView
 import assignment03.pt1.main.API.API
 import assignment03.pt1.main.Body.Body
+import assignment03.pt1.main.Utils.START
 
 import java.util
 
@@ -24,6 +25,6 @@ object Viewer:
         view.setBodies(bodiesJ)
         view.setBounds(bounds_s)
         view.display(vt, it)
-        from ! API.Msg("Inizio", Array(), null)
+        from ! API.Msg(START, Array(), null)
         Behaviors.same
     }
