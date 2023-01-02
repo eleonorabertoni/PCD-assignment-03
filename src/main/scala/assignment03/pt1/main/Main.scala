@@ -22,10 +22,11 @@ import scala.util.{Random, Success}
 import assignment03.pt1.main.Utils.createBodies
 
 object Main extends App:
-  val N_BODY: Int = 1000
-  val N_ACTORS: Int =  10
-  val N_ITERATIONS: Int = 200
-  val dim: Int = 2
+  val N_BODY: Int = 100
+  // 1, 2, 4, 6, 8, 12, 16, N_BODY
+  val N_ACTORS: Int =  1
+  val N_ITERATIONS: Int = 10_000
+  val dim: Int = 3
 
   val system: ActorSystem[API] = ActorSystem(
     Behaviors.setup[API] { ctx =>
@@ -48,6 +49,7 @@ object Main extends App:
 
         for i <- 0 until N_ACTORS do actors = actors :+ ctx.spawn(Messenger(bodies.length * i / N_ACTORS, bodies.length * (i + 1) / N_ACTORS, bounds, DT), "printer" + i)
         val viewer = ctx.spawn(Viewer(bodies, bounds,view), "viewer")
+
 
         ReceiveBehaviour.ReceiveBehaviour(bounds, actors, bodies, viewer, N_ITERATIONS, ctx).behaviourReceive()
     },
