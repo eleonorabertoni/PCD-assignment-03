@@ -5,9 +5,13 @@ import akka.actor.typed.scaladsl.Behaviors
 import assignment03.pt1.main.P2d.P2d
 import assignment03.pt2.API.API
 import assignment03.pt2.API.API.*
+import assignment03.pt2.API.STATE.
+import assignment03.pt2.API.STATE.*
 
 import concurrent.duration.{DurationInt, FiniteDuration}
 import scala.util.Random
+// TODO I BIZANTINI SONO DA CONSIDERARE?
+trait RainSensorActor
 
 object RainSensorActor:
 
@@ -19,24 +23,20 @@ object RainSensorActor:
   def simulationOscillation(rand: Random, num: Int): (Double,  Option[Iterator[Double]]) => Double =
     (n, it) => if it.nonEmpty then n + it.get.next() * rand.nextInt(num).toDouble else n + rand.nextInt(num)
 
-  class RainSensorActorImpl(pos: P2d, period: FiniteDuration, threshold: Double, simPred: (Double, Option[Iterator[Double]]) => Double, it: Option[Iterator[Double]]):
+  class RainSensorActorImpl(pos: P2d, period: FiniteDuration, threshold: Double, simPred: (Double, Option[Iterator[Double]]) => Double, it: Option[Iterator[Double]]) extends RainSensorActor:
 
-    def createRainSensorBehavior: Behavior[API] =
+    def createRainSensorBehavior(start: Double): Behavior[API] =
       Behaviors.setup[API] { ctx =>
-        var manager: ActorRef[API] = null
+        var state: STATE = SAMPLING
         Behaviors.withTimers { timers =>
+          timers.startSingleTimer(Measure(0), period)
+          // TODO CONSENSUS E SPERO NON SI BLOCCHINO
           Behaviors.receiveMessage {
-            case Start(s, from) =>
-              manager = from
-              timers.startSingleTimer(Measure(simPred(s,it)), period)
-              Behaviors.same
-            case Measure(l) =>
-              val m = simPred(l,it)
-              timers.startSingleTimer(Measure(m), period)
-              manager ! Notify(m, ctx.self)
-              Behaviors.same
-            case _ => Behaviors.stopped
-
+            case Measure(l) if state == SAMPLING =>
+               println("MISURA "+l)
+               timers.startSingleTimer(Measure(simPred(l, it)), period)
+               Behaviors.same
           }
         }
+
     }

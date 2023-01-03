@@ -12,50 +12,59 @@ import it.unibo.pcd.akka.basics.e01hello.Counter
 import it.unibo.pcd.akka.basics.e01hello.Counter.Command
 import it.unibo.pcd.akka.basics.e01hello.Counter.Command.Tick
 import it.unibo.pcd.akka.basics.e06interaction.HelloBehavior.{Greet, Greeted}
+import scala.concurrent.duration.DurationInt
 
 import java.util
 import java.util.ArrayList
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Random, Success}
-import concurrent.duration.DurationInt
 
-object Main extends App:
-  val N_RAIN_SENSOR: Int = 4
-  val N_RAIN_OSCILLATOR: Int = 1
-  val WIDTH: Int = 3
-  val HEIGHT: Int = 3
-  val rand: Random = Random(999)
-  val PERIOD = 500.millis
-  val THRESHOLD = 35
+@main def hubSeed: Unit =
+  startupWithRole("hub", seeds.head)(Root(P2d(1,1), 30, 0))
 
-  val system: ActorSystem[API] = ActorSystem(
-    Behaviors.setup[API] { ctx =>
+@main def backendSeed: Unit =
+  val it = Iterator.iterate(1.0)(_ * -1)
+  startupWithRole("backend", seeds.last)(Root(P2d(0,0),simulationOscillation(rand, 10), Option(it), 0))
 
-      val it = Iterator.iterate(1.0)(_ * -1)
-      var rainSensors: Array[ActorRef[API]] = Array()
-      for i <- 0 until N_RAIN_OSCILLATOR do rainSensors = rainSensors :+ ctx.spawn(RainSensorActor(P2d(i,i), PERIOD, THRESHOLD, simulationOscillation(rand, 10), Option(it)).createRainSensorBehavior, "rain" + i)
-      for i <- N_RAIN_OSCILLATOR to N_RAIN_SENSOR - N_RAIN_OSCILLATOR do rainSensors = rainSensors :+ ctx.spawn(RainSensorActor(P2d(i,i), PERIOD, THRESHOLD, simulationIncrement(1), None).createRainSensorBehavior, "rain" + i)
-      for r <- rainSensors do r ! API.Start(0, ctx.self)
+@main def hub8082: Unit =
+  startupWithRole("hub", 8082)(Root(P2d(1,1), 30, 0))
 
-      Behaviors.receiveMessage{
-        case Notify(l, from) if l > THRESHOLD =>
-          /*Mi devo allarmare*/
-          println(from.toString+" "+l+" "+"ALLARME")
-          Behaviors.same
-        case _ => Behaviors.same
-
-      }
-
-        // caserma
-        // coordinatore con dentro i pluviometri
+@main def backend8081: Unit =
+  val it = Iterator.iterate(1.0)(_ * -1)
+  startupWithRole("backend", 8081)(Root(P2d(0,0),simulationOscillation(rand, 10), Option(it), 0))
 
 
-        //for i <- 0 until N_ACTORS do actors = actors :+ ctx.spawn(Messenger(bodies.length * i / N_ACTORS, bodies.length * (i + 1) / N_ACTORS, bounds, DT), "printer" + i)
 
-    },
-    name = "zone"
-  )
+/*
 
+
+val system: ActorSystem[API] = ActorSystem(
+  Behaviors.setup[API] { ctx =>
+
+    val it = Iterator.iterate(1.0)(_ * -1)
+    var rainSensors: Array[ActorRef[API]] = Array()
+    for i <- 0 until N_RAIN_OSCILLATOR do rainSensors = rainSensors :+ ctx.spawn(RainSensorActor(P2d(i,i), PERIOD, THRESHOLD, simulationOscillation(rand, 10), Option(it)).createRainSensorBehavior, "rain" + i)
+    for i <- N_RAIN_OSCILLATOR to N_RAIN_SENSOR - N_RAIN_OSCILLATOR do rainSensors = rainSensors :+ ctx.spawn(RainSensorActor(P2d(i,i), PERIOD, THRESHOLD, simulationIncrement(1), None).createRainSensorBehavior, "rain" + i)
+    for r <- rainSensors do r ! API.Start(0, ctx.self)
+
+    Behaviors.receiveMessage{
+      case Notify(l, from) if l > THRESHOLD =>
+        /*Mi devo allarmare*/
+        println(from.toString+" "+l+" "+"O__O")
+        Behaviors.same
+      case _ => Behaviors.same
+
+    }
+
+      // caserma
+      // coordinatore con dentro i pluviometri
+
+
+      //for i <- 0 until N_ACTORS do actors = actors :+ ctx.spawn(Messenger(bodies.length * i / N_ACTORS, bodies.length * (i + 1) / N_ACTORS, bounds, DT), "printer" + i)
+
+  },
+  name = "zone"
+)
+*/
 
 
 
