@@ -40,16 +40,47 @@ object RainSensorActor:
             }
           }
           var others: Set[ActorRef[API]] = Set()
-          var registered = false
-          var state: STATE = SAMPLING/*
+          //var mapActorsValues: Map[ActorRef[API], Double] = Map()
+          //var alreadySent: Map[ActorRef[API], Double] = Map()
+          var values: Set[Double] = Set()
+          var alreadySent: Set[Double] = Set()
+          var state: STATE = SAMPLING
+          var k = 0
+          var received = 0
           Behaviors.withTimers { timers =>
-            timers.startSingleTimer(Measure(0), period)*/
+            timers.startSingleTimer(Measure(0), period)
             // TODO CONSENSUS E SPERO NON SI BLOCCHINO
-            Behaviors.receiveMessage {/*
+            Behaviors.receiveMessage {
               case Measure(l) if state == SAMPLING =>
                  println("MISURA "+l)
                  timers.startSingleTimer(Measure(simPred(l, it)), period)
-                 Behaviors.same*/
+                 Behaviors.same
+              case Measure(l) if state == SAMPLING && l > THRESHOLD =>
+                // TODO INIZIA IL PROCESSO DI DECISIONE ?
+                k = k + 1
+                state = UNDECIDED
+                //values = values + (ctx.self -> l)
+                values = values + l
+                alreadySent = values
+                for o <- others if o != ctx.self do o ! Deciding(values)
+                Behaviors.same
+              case Deciding(v) =>
+                received = received + 1
+                values = v.union(values)
+                if (received == others.size)
+                  received = 0
+                  alreadySent = values.diff(alreadySent)
+                  k = k + 1
+                  if (k == others.size)
+                    if (values.count(v => v > THRESHOLD) > others.size / 2)
+                      state = ALARM
+                      for o <- others do o ! Alarm("Aiuto")
+                    else
+                      state = SAMPLING
+                  for o <- others if o != ctx.self do o ! Deciding(alreadySent)
+                Behaviors.same
+
+
               case StatsServiceKey.Listing(listing) if others.size != listing.size =>
                 others = listing
                 println("MSG "+ listing)
@@ -57,16 +88,10 @@ object RainSensorActor:
               case _ => Behaviors.same
 
 
-
-              /*
-              case m: Receptionist.Listing =>
-                println("MSG "+m)*/
-                Behaviors.same
-
            
 
             }
 
-          //}
+          }
 
     }
