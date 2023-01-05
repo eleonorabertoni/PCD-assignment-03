@@ -19,21 +19,22 @@ object Root:
   /**
    * Factory for RainSensor
    */
-  def apply(pos: P2d, simPred: (Double, Option[Iterator[Double]])=> Double, it: Option[Iterator[Double]], i: Int): Behavior[API] =
+  def apply(pos: P2d, simPred: (Double, Option[Iterator[Double]])=> Double, it: Option[Iterator[Double]], i: Int): Behavior[API | Receptionist.Listing] =
     Behaviors.setup { ctx =>
-    val cluster = Cluster(ctx.system)
-    if (cluster.selfMember.hasRole("backend"))
-      val rainSensor = ctx.spawn(RainSensorActor(pos, PERIOD, THRESHOLD, simPred, it).createRainSensorBehavior(0), "rain" + i)
-      ctx.system.receptionist ! Receptionist.Register(StatsServiceKey, rainSensor)
+    //val cluster = Cluster(ctx.system)
+    //println("CLUSTER "+cluster.manager)
+    //if (cluster.selfMember.hasRole("backend"))
+    val rainSensor = ctx.spawn(RainSensorActor(pos, PERIOD, THRESHOLD, simPred, it).createRainSensorBehavior(0), "backend" + i)
+    ctx.system.receptionist ! Receptionist.Register(StatsServiceKey, rainSensor)
       //rainSensor ! API.Measure(0)
     Behaviors.empty
   }
 
   def apply(pos: P2d, threshold: Double, i: Int): Behavior[API] =
     Behaviors.setup { ctx =>
-      val cluster = Cluster(ctx.system)
+      //val cluster = Cluster(ctx.system)
       val hub = ctx.spawn(HubActor(pos, 1000.millis, threshold).createHubBehavior, "hub" + i)
-      if (cluster.selfMember.hasRole("hub"))
-        ctx.system.receptionist ! Receptionist.Register(StatsServiceKey, hub)
+      //if (cluster.selfMember.hasRole("hub"))
+      //  ctx.system.receptionist ! Receptionist.Register(StatsServiceKey, hub)
       Behaviors.empty
     }
