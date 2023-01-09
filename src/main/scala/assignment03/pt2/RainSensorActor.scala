@@ -4,8 +4,8 @@ import akka.actor.typed.receptionist.Receptionist
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.Behaviors
 import assignment03.pt1.main.P2d.P2d
-import assignment03.pt2.API.API
-import assignment03.pt2.API.API.*
+import assignment03.pt2.API
+import assignment03.pt2.API.*
 import assignment03.pt2.API.STATE
 import assignment03.pt2.API.STATE.*
 import assignment03.pt2.Root.StatsServiceKey
@@ -24,7 +24,7 @@ object RainSensorActor:
 
   def simulationOscillation(rand: Random, num: Int): (Double,  Option[Iterator[Double]]) => Double =
     (n, it) => if it.nonEmpty then n + it.get.next() * rand.nextInt(num).toDouble else n + rand.nextInt(num)
-
+  //TODO ATTORI POSSONO AVERE TUTTO QUESTO STATO ????
   class RainSensorActorImpl(pos: P2d, period: FiniteDuration, threshold: Double, simPred: (Double, Option[Iterator[Double]]) => Double, it: Option[Iterator[Double]]) extends RainSensorActor:
       def createRainSensorBehavior(start: Double): Behavior[API | Receptionist.Listing] =
         Behaviors.setup[API | Receptionist.Listing] { ctx =>
@@ -44,6 +44,7 @@ object RainSensorActor:
           //var alreadySent: Map[ActorRef[API], Double] = Map()
           var values: Set[Double] = Set()
           var alreadySent: Set[Double] = Set()
+          var lastValue: Double = -1
           var state: STATE = SAMPLING
           var k = 0
           var received = 0
@@ -51,33 +52,65 @@ object RainSensorActor:
             timers.startSingleTimer(Measure(0), period)
             // TODO CONSENSUS E SPERO NON SI BLOCCHINO
             Behaviors.receiveMessage {
+              case Start() =>
+                println("START")
+                state = SAMPLING
+                values = Set()
+                alreadySent = Set()
+                timers.startSingleTimer(Measure(simPred(lastValue,it)), period)
+                Behaviors.same
+              case Measure(l) if state == SAMPLING && l > THRESHOLD =>
+                lastValue = l
+                println("MISURA THRESHOLD"+ l)
+                // TODO INIZIA IL PROCESSO DI DECISIONE ?
+                state = UNDECIDED
+                //values = values + (ctx.self -> l)
+                // TODO
+                values = values + l
+                alreadySent = values
+                for o <- others if o != ctx.self do o ! Decide(values, ctx.self)
+                Behaviors.same
               case Measure(l) if state == SAMPLING =>
+                 lastValue = l
                  println("MISURA "+l)
                  timers.startSingleTimer(Measure(simPred(l, it)), period)
                  Behaviors.same
-              case Measure(l) if state == SAMPLING && l > THRESHOLD =>
-                // TODO INIZIA IL PROCESSO DI DECISIONE ?
-                k = k + 1
-                state = UNDECIDED
-                //values = values + (ctx.self -> l)
-                values = values + l
-                alreadySent = values
-                for o <- others if o != ctx.self do o ! Deciding(values)
-                Behaviors.same
+              case Decide(v, ref) =>
+                 state = UNDECIDED
+                 values = v.union(values).union(Set(lastValue))
+                 ref ! Deciding(values)
+                 println("RICHIESTA DECIDE "+ctx.self+" "+ values)
+                 Behaviors.same
               case Deciding(v) =>
                 received = received + 1
                 values = v.union(values)
-                if (received == others.size)
+                println("RISPOSTA DECIDING "+ctx.self+" "+ values)
+                if (received == others.size - 1)
+                  println("1 if")
                   received = 0
                   alreadySent = values.diff(alreadySent)
                   k = k + 1
-                  if (k == others.size)
+                  if (k > others.size)
+                    println("k"+k)
+                    k = 0
+                    println("2 if")
                     if (values.count(v => v > THRESHOLD) > others.size / 2)
+                      println("3if")
                       state = ALARM
-                      for o <- others do o ! Alarm("Aiuto")
+                      values = Set()
+                      alreadySent = Set()
+                      for o <- others if o != ctx.self do o ! Alarm("Aiuto")
                     else
-                      state = SAMPLING
-                  for o <- others if o != ctx.self do o ! Deciding(alreadySent)
+                      println("else")
+                      state = UNDECIDED
+                      for o <- others do o ! Start()
+                  else
+                    // iniziate un altro turno
+                    for o <- others if o != ctx.self do o ! Decide(alreadySent, ctx.self)
+                Behaviors.same
+              case Alarm(msg) =>
+                state = ALARM
+                println("ALARM "+ctx.self)
                 Behaviors.same
 
 

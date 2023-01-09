@@ -3,13 +3,15 @@ package assignment03.pt2
 import akka.actor.typed.ActorRef
 
 object API:
-  
-  enum API:
-    case Measure(rainLevel: Double)
-    case Deciding(actorsValues: Set[Double])
-    case Alarm(msg: String)
-    case Start(start: Double, from: ActorRef[API])
-    case Notify(rainLevel: Double, from: ActorRef[API])
+
+  trait API
+  case class Measure(rainLevel: Double) extends API with Message
+  case class Decide(actorsValues: Set[Double], ref: ActorRef[API]) extends API with Message
+  case class Deciding(actorsValues: Set[Double]) extends API with Message
+  case class Alarm(msg: String) extends API with Message
+  case class Start() extends API with Message
+  case class Test() extends API with Message
+  case class Notify(rainLevel: Double, from: ActorRef[API]) extends API with Message
 
   enum STATE:
     case SAMPLING, UNDECIDED, DECIDED, ALARM
