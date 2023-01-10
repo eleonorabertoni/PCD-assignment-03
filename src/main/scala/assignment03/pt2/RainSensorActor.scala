@@ -8,7 +8,7 @@ import assignment03.pt2.API
 import assignment03.pt2.API.*
 import assignment03.pt2.API.STATE
 import assignment03.pt2.API.STATE.*
-import assignment03.pt2.Root.StatsServiceKey
+import assignment03.pt2.Root.{HubServiceKey, StatsServiceKey}
 
 import concurrent.duration.{DurationInt, FiniteDuration}
 import scala.util.Random
@@ -32,6 +32,7 @@ object RainSensorActor:
           ctx.spawnAnonymous[Receptionist.Listing] {
             Behaviors.setup { internal =>
               internal.system.receptionist ! Receptionist.Subscribe(StatsServiceKey, internal.self)
+              internal.system.receptionist ! Receptionist.Subscribe(HubServiceKey, internal.self)
               Behaviors.receiveMessage {
                 case msg: Receptionist.Listing =>
                   ctx.self ! msg
@@ -39,6 +40,7 @@ object RainSensorActor:
               }
             }
           }
+          var hub: Option[ActorRef[API]] = None
           var others: Set[ActorRef[API]] = Set()
           //var mapActorsValues: Map[ActorRef[API], Double] = Map()
           //var alreadySent: Map[ActorRef[API], Double] = Map()
@@ -48,9 +50,10 @@ object RainSensorActor:
           var state: STATE = SAMPLING
           var k = 0
           var received = 0
+          var decided = 0
           Behaviors.withTimers { timers =>
             timers.startSingleTimer(Measure(0), period)
-            // TODO CONSENSUS E SPERO NON SI BLOCCHINO
+            // TODO ANCHE SE DA SOLO DEVE POTER PRENDERE UNA DECISIONE
             Behaviors.receiveMessage {
               case Start() =>
                 println("START")
@@ -63,25 +66,33 @@ object RainSensorActor:
                 lastValue = l
                 println("MISURA THRESHOLD"+ l)
                 // TODO INIZIA IL PROCESSO DI DECISIONE ?
-                state = UNDECIDED
+                //? state = UNDECIDED
                 //values = values + (ctx.self -> l)
                 // TODO
-                values = values + l
-                alreadySent = values
-                for o <- others if o != ctx.self do o ! Decide(values, ctx.self)
+                //values = values + l
+                //alreadySent = values
+                //for o <- others if o != ctx.self do o ! Decide(values, ctx.self)
+                ctx.self ! StartDecision()
                 Behaviors.same
               case Measure(l) if state == SAMPLING =>
                  lastValue = l
                  println("MISURA "+l)
                  timers.startSingleTimer(Measure(simPred(l, it)), period)
                  Behaviors.same
+              case StartDecision() if state != UNDECIDED =>
+                state = UNDECIDED
+                for o <- others if o != ctx.self do o ! StartDecision()
+                for o <- others if o != ctx.self do o ! Decide(values, ctx.self)
+                Behaviors.same
               case Decide(v, ref) =>
-                 state = UNDECIDED
+                 //if state != UNDECIDED then for o <- others if o != ctx.self do o ! Decide(alreadySent, ctx.self) // TODO ??
+                 //state = UNDECIDED
                  values = v.union(values).union(Set(lastValue))
                  ref ! Deciding(values)
                  println("RICHIESTA DECIDE "+ctx.self+" "+ values)
                  Behaviors.same
               case Deciding(v) =>
+                //Thread.sleep(1000) // TEST
                 received = received + 1
                 values = v.union(values)
                 println("RISPOSTA DECIDING "+ctx.self+" "+ values)
@@ -99,24 +110,33 @@ object RainSensorActor:
                       state = ALARM
                       values = Set()
                       alreadySent = Set()
-                      for o <- others if o != ctx.self do o ! Alarm("Aiuto")
+                      if (hub.nonEmpty)
+                        hub.get ! Alarm("Aiuto")
+                      //for o <- others if o != ctx.self do o ! Alarm("Aiuto")
                     else
                       println("else")
-                      state = UNDECIDED
-                      for o <- others do o ! Start()
+                      //state = UNDECIDED
+                      ctx.self ! Start()
+                      //for o <- others do o ! Start()
                   else
                     // iniziate un altro turno
                     for o <- others if o != ctx.self do o ! Decide(alreadySent, ctx.self)
                 Behaviors.same
+              /*
               case Alarm(msg) =>
                 state = ALARM
                 println("ALARM "+ctx.self)
+                if (hub.nonEmpty)
+                  hub.get ! Alarm("ciao hub sono "+ctx.self)
                 Behaviors.same
-
-
+              */
               case StatsServiceKey.Listing(listing) if others.size != listing.size =>
                 others = listing
                 println("MSG "+ listing)
+                Behaviors.same
+              case HubServiceKey.Listing(listing) if listing.nonEmpty =>
+                println("CASO")
+                hub = Some(listing.head)
                 Behaviors.same
               case _ => Behaviors.same
 

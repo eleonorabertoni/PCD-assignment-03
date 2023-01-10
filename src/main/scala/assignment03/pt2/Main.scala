@@ -31,7 +31,7 @@ import scala.concurrent.{ExecutionContext, Future}
 */
 @main def backend8081: Unit =
   val it = Iterator.iterate(1.0)(_ * -1)
-  startupWithRole("backend", 8081)(Root(P2d(0,0), simulationOscillation(rand,2), Option(it), 1))
+  startupWithRole("backend", 8081)(Root(P2d(0,0), simulationIncrement(20), Option(it), 1))
 
 @main def backend8082: Unit =
   val it = Iterator.iterate(1.0)(_ * -1)

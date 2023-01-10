@@ -18,7 +18,12 @@ object HubActor:
 
     override def createHubBehavior: Behavior[API] =
       Behaviors.setup[API] { ctx =>
-          Behaviors.empty
+        Behaviors.receiveMessage {
+          msg =>
+            println("HUB " + msg)
+            Behaviors.same
+
+        }
 
       }
 

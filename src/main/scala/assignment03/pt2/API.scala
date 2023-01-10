@@ -8,6 +8,7 @@ object API:
   case class Measure(rainLevel: Double) extends API with Message
   case class Decide(actorsValues: Set[Double], ref: ActorRef[API]) extends API with Message
   case class Deciding(actorsValues: Set[Double]) extends API with Message
+  case class StartDecision() extends API with Message
   case class Alarm(msg: String) extends API with Message
   case class Start() extends API with Message
   case class Test() extends API with Message
