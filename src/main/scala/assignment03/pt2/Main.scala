@@ -24,14 +24,14 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @main def backendSeed: Unit =
   val it = Iterator.iterate(1.0)(_ * -1)
-  startupWithRole("backend", seeds.last)(Root(P2d(0,0),simulationOscillation(rand, 5), Option(it), 0))
+  startupWithRole("backend", seeds.last)(Root(P2d(0,0),simulationIncrement(5), Option(it), 0))
 /*
 @main def hub8082: Unit =
   startupWithRole("hub", 8082)(Root(P2d(1,1), 30, 1))
 */
 @main def backend8081: Unit =
   val it = Iterator.iterate(1.0)(_ * -1)
-  startupWithRole("backend", 8081)(Root(P2d(0,0), simulationIncrement(20), Option(it), 1))
+  startupWithRole("backend", 8081)(Root(P2d(0,0), simulationOscillation(rand,5), Option(it), 1))
 
 @main def backend8082: Unit =
   val it = Iterator.iterate(1.0)(_ * -1)

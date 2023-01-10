@@ -42,103 +42,78 @@ object RainSensorActor:
           }
           var hub: Option[ActorRef[API]] = None
           var others: Set[ActorRef[API]] = Set()
-          //var mapActorsValues: Map[ActorRef[API], Double] = Map()
-          //var alreadySent: Map[ActorRef[API], Double] = Map()
-          var values: Set[Double] = Set()
-          var alreadySent: Set[Double] = Set()
-          var lastValue: Double = -1
-          var state: STATE = SAMPLING
-          var k = 0
-          var received = 0
-          var decided = 0
+
+          var data = Data()
+
           Behaviors.withTimers { timers =>
             timers.startSingleTimer(Measure(0), period)
             // TODO ANCHE SE DA SOLO DEVE POTER PRENDERE UNA DECISIONE
             Behaviors.receiveMessage {
-              case Start() =>
+              case Start(v) =>
                 println("START")
-                state = SAMPLING
-                values = Set()
-                alreadySent = Set()
-                timers.startSingleTimer(Measure(simPred(lastValue,it)), period)
+                data = Data().copy(lastValue = v)
+                timers.startSingleTimer(Measure(simPred(v,it)), period)
                 Behaviors.same
-              case Measure(l) if state == SAMPLING && l > THRESHOLD =>
-                lastValue = l
-                println("MISURA THRESHOLD"+ l)
-                // TODO INIZIA IL PROCESSO DI DECISIONE ?
-                //? state = UNDECIDED
-                //values = values + (ctx.self -> l)
-                // TODO
-                //values = values + l
-                //alreadySent = values
-                //for o <- others if o != ctx.self do o ! Decide(values, ctx.self)
-                ctx.self ! StartDecision()
+              case Measure(l) if data.state == SAMPLING && l > THRESHOLD =>
+                if (others.size == 1 && hub.nonEmpty)
+                    println("IIIIIIIIIIIIIIIIIIIIIIFFFFFFFFFFFFFFFFFFF")
+                    data = data.copy(state = ALARM)
+                    hub.get ! Alarm("aiuto")
+                    //ctx.self ! Start(0) // TODO dovrebbe ripartire da 0 (solo per simulare) però è rotto
+                else
+                  println("ELSEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE")
+                  data = data.copy(lastValue = l)
+                  ctx.self ! StartDecision()
                 Behaviors.same
-              case Measure(l) if state == SAMPLING =>
-                 lastValue = l
+              case Measure(l) if data.state == SAMPLING =>
+                 data = data.copy(lastValue = l)
                  println("MISURA "+l)
                  timers.startSingleTimer(Measure(simPred(l, it)), period)
                  Behaviors.same
-              case StartDecision() if state != UNDECIDED =>
-                state = UNDECIDED
+              case StartDecision() if data.state != UNDECIDED =>
+                println("START DECISION")
+                data = data.copy(state = UNDECIDED)
                 for o <- others if o != ctx.self do o ! StartDecision()
-                for o <- others if o != ctx.self do o ! Decide(values, ctx.self)
+                for o <- others if o != ctx.self do o ! Decide(data.values, ctx.self)
                 Behaviors.same
               case Decide(v, ref) =>
-                 //if state != UNDECIDED then for o <- others if o != ctx.self do o ! Decide(alreadySent, ctx.self) // TODO ??
-                 //state = UNDECIDED
-                 values = v.union(values).union(Set(lastValue))
-                 ref ! Deciding(values)
-                 println("RICHIESTA DECIDE "+ctx.self+" "+ values)
+                 data = data.copy(values = v.union(data.values).union(Set(data.lastValue)))
+                 ref ! Deciding(data.values)
+                 println("MANDO A "+ref+" "+ data.values)
                  Behaviors.same
               case Deciding(v) =>
                 //Thread.sleep(1000) // TEST
-                received = received + 1
-                values = v.union(values)
-                println("RISPOSTA DECIDING "+ctx.self+" "+ values)
-                if (received == others.size - 1)
-                  println("1 if")
-                  received = 0
-                  alreadySent = values.diff(alreadySent)
-                  k = k + 1
-                  if (k > others.size)
-                    println("k"+k)
-                    k = 0
-                    println("2 if")
-                    if (values.count(v => v > THRESHOLD) > others.size / 2)
-                      println("3if")
-                      state = ALARM
-                      values = Set()
-                      alreadySent = Set()
+                data = data.copy(received = data.received + 1, values = v.union(data.values))
+                println("RISPOSTA DECIDING "+ data.values)
+                if (data.received == others.size - 1)
+                  data = data.copy(received = 0, alreadySent = data.values.diff(data.alreadySent), k = data.k + 1)
+                  if (data.k > others.size)
+                    println("k"+data.k)
+                    data = data.copy(k = 0)
+                    if (data.values.count(v => v > THRESHOLD) > others.size / 2)
+                      data = data.copy(state = ALARM, values = Set(), alreadySent = Set())
+                      //ctx.self ! Start(0) // TODO dovrebbe ripartire da 0 (solo per simulare) però è rotto
                       if (hub.nonEmpty)
                         hub.get ! Alarm("Aiuto")
-                      //for o <- others if o != ctx.self do o ! Alarm("Aiuto")
                     else
-                      println("else")
-                      //state = UNDECIDED
-                      ctx.self ! Start()
-                      //for o <- others do o ! Start()
+                      ctx.self ! Start(data.lastValue)
                   else
                     // iniziate un altro turno
-                    for o <- others if o != ctx.self do o ! Decide(alreadySent, ctx.self)
+                    for o <- others if o != ctx.self do o ! Decide(data.alreadySent, ctx.self)
                 Behaviors.same
-              /*
-              case Alarm(msg) =>
-                state = ALARM
-                println("ALARM "+ctx.self)
-                if (hub.nonEmpty)
-                  hub.get ! Alarm("ciao hub sono "+ctx.self)
-                Behaviors.same
-              */
               case StatsServiceKey.Listing(listing) if others.size != listing.size =>
                 others = listing
                 println("MSG "+ listing)
+                if (others.size == 1 && data.state == UNDECIDED)
+                  println("TEEEEEEEEEEEEEEEEEESTTTTTTTT")
+                  ctx.self ! Start(data.lastValue)
                 Behaviors.same
               case HubServiceKey.Listing(listing) if listing.nonEmpty =>
-                println("CASO")
+
                 hub = Some(listing.head)
                 Behaviors.same
-              case _ => Behaviors.same
+              case _ =>
+                Behaviors.same
 
 
            
