@@ -44,72 +44,63 @@ object RainSensorActor:
           var others: Set[ActorRef[API]] = Set()
 
           var data = Data()
-
+          // TODO PROBLEMA NON RIPRENDE AD AVVERTIRE !!!
           Behaviors.withTimers { timers =>
-            timers.startSingleTimer(Measure(0), period)
-            // TODO ANCHE SE DA SOLO DEVE POTER PRENDERE UNA DECISIONE
+            timers.startSingleTimer(Start(0, SAMPLING), period)
             Behaviors.receiveMessage {
-              case Start(v) =>
-                println("START")
-                data = Data().copy(lastValue = v)
-                timers.startSingleTimer(Measure(simPred(v,it)), period)
+              case Start(v, state) =>
+                println("START, STATE " + data)
+                //Thread.sleep(2000) //test
+                data = Data().copy(lastValue = v, state = state)
+                timers.startSingleTimer(Measure(simPred(v, it)), period)
                 Behaviors.same
               case Measure(l) if data.state == SAMPLING && l > THRESHOLD =>
-                if (others.size == 1 && hub.nonEmpty)
-                    println("IIIIIIIIIIIIIIIIIIIIIIFFFFFFFFFFFFFFFFFFF")
-                    data = data.copy(state = ALARM)
-                    hub.get ! Alarm("aiuto")
-                    //ctx.self ! Start(0) // TODO dovrebbe ripartire da 0 (solo per simulare) però è rotto
-                else
-                  println("ELSEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE")
-                  data = data.copy(lastValue = l)
-                  ctx.self ! StartDecision()
+                println("THRESHOLD " + l)
+                data = data.copy(lastValue = l)
+                for o <- others do o ! Decide(l, ctx.self)
                 Behaviors.same
-              case Measure(l) if data.state == SAMPLING =>
+              case Measure(l) =>
                  data = data.copy(lastValue = l)
                  println("MISURA "+l)
                  timers.startSingleTimer(Measure(simPred(l, it)), period)
                  Behaviors.same
-              case StartDecision() if data.state != UNDECIDED =>
-                println("START DECISION")
-                data = data.copy(state = UNDECIDED)
-                for o <- others if o != ctx.self do o ! StartDecision()
-                for o <- others if o != ctx.self do o ! Decide(data.values, ctx.self)
-                Behaviors.same
               case Decide(v, ref) =>
-                 data = data.copy(values = v.union(data.values).union(Set(data.lastValue)))
-                 ref ! Deciding(data.values)
-                 println("MANDO A "+ref+" "+ data.values)
-                 Behaviors.same
-              case Deciding(v) =>
-                //Thread.sleep(1000) // TEST
-                data = data.copy(received = data.received + 1, values = v.union(data.values))
-                println("RISPOSTA DECIDING "+ data.values)
-                if (data.received == others.size - 1)
-                  data = data.copy(received = 0, alreadySent = data.values.diff(data.alreadySent), k = data.k + 1)
-                  if (data.k > others.size)
-                    println("k"+data.k)
-                    data = data.copy(k = 0)
-                    if (data.values.count(v => v > THRESHOLD) > others.size / 2)
-                      data = data.copy(state = ALARM, values = Set(), alreadySent = Set())
-                      //ctx.self ! Start(0) // TODO dovrebbe ripartire da 0 (solo per simulare) però è rotto
-                      if (hub.nonEmpty)
-                        hub.get ! Alarm("Aiuto")
-                    else
-                      ctx.self ! Start(data.lastValue)
-                  else
-                    // iniziate un altro turno
-                    for o <- others if o != ctx.self do o ! Decide(data.alreadySent, ctx.self)
+                println("SONO "+ ctx.self + "RICEVO "+ v + " DA "+ ref)
+
+                data = data.copy(values = v +: data.values)
+                println("VALORI "+data.values)
+                if (data.values.count(v => v > THRESHOLD) > others.size / 2)
+                  println("ALLARME GLOBALE")
+                  if (hub.nonEmpty)
+                    hub.get ! Alarm(data.values)
+                  //ctx.self ! Start(data.lastValue, ALARM)
+                  data = data.copy(state = ALARM)
+                  ctx.self ! Measure(data.lastValue)
+                else
+                  if (ref == ctx.self)
+                    println("ALLARME LOCALE")
+                    data = data.copy(state = ALARM)
+                  ctx.self ! Measure(data.lastValue)
+               Behaviors.same
+              case Msg("SOLVING") =>
+                println("SOLVING")
+                data = data.copy(state = SOLVING)
                 Behaviors.same
+              case Msg("OK") =>
+                Start(0, SAMPLING) // TODO
+                Behaviors.same
+
+
               case StatsServiceKey.Listing(listing) if others.size != listing.size =>
                 others = listing
                 println("MSG "+ listing)
+                /*
                 if (others.size == 1 && data.state == UNDECIDED)
                   println("TEEEEEEEEEEEEEEEEEESTTTTTTTT")
-                  ctx.self ! Start(data.lastValue)
+                  ctx.self ! Start(data.lastValue, SAMPLING)
+                */
                 Behaviors.same
               case HubServiceKey.Listing(listing) if listing.nonEmpty =>
-
                 hub = Some(listing.head)
                 Behaviors.same
               case _ =>
