@@ -12,7 +12,7 @@ object API:
   case class Msg(info: String) extends API with Message
 
   enum STATE:
-    case SAMPLING, ALARM, SOLVING
+    case SAMPLING, ALARM, SOLVING, RESTARTING
   
   enum HUB_STATE:
     case FREE, OCCUPIED

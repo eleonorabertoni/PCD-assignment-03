@@ -49,6 +49,11 @@ object HubActor:
             Thread.sleep(10000)
             println("HO RISOLTO")
             for r <- rainSensors do r ! Msg("OK")
+            ctx.self ! Msg("OK")
+            Behaviors.same
+          case Msg("OK") if state == OCCUPIED =>
+            state = FREE
+            println("FREE")
             Behaviors.same
           case _ => Behaviors.same
 
