@@ -6,7 +6,7 @@ import akka.actor.typed.scaladsl.Behaviors
 import assignment03.pt1.main.P2d.P2d
 import assignment03.pt2.API.{API, Alarm, HUB_STATE, Msg}
 import assignment03.pt2.API.HUB_STATE.*
-import assignment03.pt2.Root.StatsServiceKey
+import assignment03.pt2.Root.{StatsServiceKey, ViewServiceKey}
 
 import concurrent.duration.FiniteDuration
 import concurrent.duration.DurationInt
@@ -26,6 +26,7 @@ object HubActor:
         ctx.spawnAnonymous[Receptionist.Listing] {
           Behaviors.setup { internal =>
             internal.system.receptionist ! Receptionist.Subscribe(StatsServiceKey, internal.self)
+            internal.system.receptionist ! Receptionist.Subscribe(ViewServiceKey, internal.self)
             Behaviors.receiveMessage {
               case msg: Receptionist.Listing =>
                 ctx.self ! msg
@@ -35,14 +36,20 @@ object HubActor:
         }
 
         var rainSensors: Set[ActorRef[API]] = Set()
+        var viewService: ActorRef[API] = null 
         var state: HUB_STATE = FREE
         Behaviors.receiveMessage {
           case StatsServiceKey.Listing(listing) if rainSensors.size != listing.size =>
             rainSensors = listing
             println("MSG "+ listing)
             Behaviors.same
+          case ViewServiceKey.Listing(listing) if listing.nonEmpty =>
+            viewService = listing.head
+            viewService ! Msg(state.toString)
+            Behaviors.same
           case Alarm(msg) if state == FREE =>
             state = OCCUPIED
+            if viewService != null then viewService ! Msg(state.toString) // TODO forse non serve il controllo
             println("HUB " + msg)
             println("RISOLVO")
             for r <- rainSensors do r ! Msg("SOLVING")
@@ -53,6 +60,7 @@ object HubActor:
             Behaviors.same
           case Msg("OK") if state == OCCUPIED =>
             state = FREE
+            if viewService != null then viewService ! Msg(state.toString)
             println("FREE")
             Behaviors.same
           case _ => Behaviors.same

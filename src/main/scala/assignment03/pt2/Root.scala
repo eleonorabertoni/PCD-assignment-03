@@ -14,8 +14,10 @@ import assignment03.pt2.HubActor.*
 import scala.util.Random
 
 object Root:
-  val StatsServiceKey: ServiceKey[API] = ServiceKey[API]("StatsService")
-  val HubServiceKey: ServiceKey[API] = ServiceKey[API]("HubService")
+  val StatsServiceKey: ServiceKey[API] = ServiceKey[API]("StatsService") //TODO per zona
+  val HubServiceKey: ServiceKey[API] = ServiceKey[API]("HubService") // TODO per zona
+  val FireStationServiceKey: ServiceKey[API] = ServiceKey[API]("FireStation") // TODO per tutti gli hub
+  val ViewServiceKey: ServiceKey[API] = ServiceKey[API]("ViewService") // TODO per tutti quelli che devono parlare con la view
 
   /**
    * Factory for RainSensor
@@ -37,5 +39,6 @@ object Root:
       val hub = ctx.spawn(HubActor(pos, 1000.millis, threshold).createHubBehavior, "hub" + i)
       //if (cluster.selfMember.hasRole("hub"))
       ctx.system.receptionist ! Receptionist.Register(HubServiceKey, hub)
+      ctx.system.receptionist ! Receptionist.Register(FireStationServiceKey, hub)
       Behaviors.empty
     }
