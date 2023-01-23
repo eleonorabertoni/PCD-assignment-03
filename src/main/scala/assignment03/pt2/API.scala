@@ -12,6 +12,7 @@ object API:
   case class Start(v: Double, state: STATE) extends API with Message
   case class UpdateGUI(bounds: Boundary, actorRef: ActorRef[API]) extends API with Message
   case class Msg(info: String) extends API with Message
+  case class Stop() extends API with Message
 
   enum STATE:
     case SAMPLING, ALARM, SOLVING

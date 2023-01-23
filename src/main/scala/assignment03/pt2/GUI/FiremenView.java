@@ -5,6 +5,7 @@ import assignment03.pt1.main.Boundary;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import javax.swing.border.Border;
 
 /**
  * Simulation view
@@ -29,41 +30,67 @@ public class FiremenView {
 
     public void display(double vt, long iter) {
         if(bounds == null){
-            System.out.println("CIAO");
             throw new IllegalStateException("Bounds are not set");
         }else {
-            System.out.println("WUT");
             frame.display(vt, iter, bounds);
         }
 
+    }
 
-
-
-
+    public void setText(String text) {
+        this.frame.setText(text);
     }
 
     public void setBounds(Boundary bounds) {
         this.bounds = bounds;
     }
 
+    public void setDisableButton(ActionListener al) {
+        frame.setDisableButton(al);
+    }
+
+    public static class ZonePanel extends JPanel {
+        private static JButton b;
+        private JLabel name;
+        private JLabel l;
+
+        public ZonePanel(String s){
+            b = new JButton("Disable Alarm");
+            name = new JLabel(s);
+            l = new JLabel("");
+            setBorder(BorderFactory.createLineBorder(Color.black));
+            add(name);
+            add(b);
+            add(l);
+        }
+
+        public void addActionListener(ActionListener al) {
+            b.addActionListener(al);
+        }
+        public void setLabelText(String s) {
+            l.setText(s);
+        }
+    }
 
     public static class VisualiserFrame extends JFrame {
 
-        private static VisualiserPanel panel;
-        private static JButton disableButton;
+        private static java.util.List<ZonePanel> panels = new java.util.LinkedList<ZonePanel>();
 
         public VisualiserFrame(int w, int h) {
+
             setSize(w, h);
             setResizable(false);
-            panel = new VisualiserPanel(w, h);
-            getContentPane().setLayout(new BorderLayout(0, 0));
-            JPanel panel2 = new JPanel();
-            disableButton = new JButton("Disable Alarm");
-            panel2.setLayout(new FlowLayout());
-            panel2.add(disableButton);
-            getContentPane().add(panel2, BorderLayout.SOUTH);
 
-            getContentPane().add(panel, BorderLayout.CENTER);
+            for (int i = 2; i >= 0; i--) {
+                panels.add(new ZonePanel("Zone " + i));
+            }
+
+            getContentPane().setLayout(new BoxLayout(this.getContentPane(), BoxLayout.X_AXIS));
+
+            for (int i = 2; i >= 0; i--) {
+                getContentPane().add(panels.get(i), BoxLayout.X_AXIS);
+            }
+
             addWindowListener(new WindowAdapter() {
                 public void windowClosing(WindowEvent ev) {
                     System.exit(0);
@@ -76,25 +103,29 @@ public class FiremenView {
             this.setVisible(true);
         }
 
+        public static void setText(String s){
+            panels.get(0).setLabelText(s);
+        }
+
         public static void setFocusOnSimulation() {
-            panel.requestFocusInWindow();
+           // panel.requestFocusInWindow();
         }
 
         public static void setDisableButton(ActionListener al) {
-            disableButton.addActionListener(al);
+            panels.get(0).addActionListener(al);
         }
 
         public void display(double vt, long iter, Boundary bounds) {
             try {
                 SwingUtilities.invokeAndWait(() -> {
-                    panel.display(vt, iter, bounds);
+                    //panel.display(vt, iter, bounds);
                     repaint();
                 });
             } catch (Exception ex) {}
         };
 
         public void updateScale(double k) {
-            panel.updateScale(k);
+            //panel.updateScale(k);
         }
 
 
@@ -140,6 +171,7 @@ public class FiremenView {
                 g2.drawRect(x0, y0 - ht, wd, ht);
 
                 String time = String.format("%.2f", vt);
+                //g2.drawString(""+text.getText(), 5, 50);
                 g2.drawString(" - vt: " + time + " - nIter: " + nIter + " (UP for zoom in, DOWN for zoom out)", 2, 20);
             }
         }

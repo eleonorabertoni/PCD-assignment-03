@@ -44,16 +44,18 @@ object HubActor:
             println("MSG "+ listing)
             Behaviors.same
           case ViewServiceKey.Listing(listing) if listing.nonEmpty =>
+            println("SET VIEW")
             viewService = listing.head
             viewService ! Msg(state.toString)
             Behaviors.same
           case Alarm(msg) if state == FREE =>
             state = OCCUPIED
+            println(viewService != null)
             if viewService != null then viewService ! Msg(state.toString) // TODO forse non serve il controllo
             println("HUB " + msg)
             println("RISOLVO")
             for r <- rainSensors do r ! Msg("SOLVING")
-            Thread.sleep(10000)
+            Thread.sleep(10000) // TODO da togliere quando il pulsante funziona
             println("HO RISOLTO")
             for r <- rainSensors do r ! Msg("OK")
             ctx.self ! Msg("OK")

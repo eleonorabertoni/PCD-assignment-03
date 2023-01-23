@@ -34,10 +34,15 @@ object Viewer:
           fireStations = listing.toList
           Behaviors.same
         case API.UpdateGUI(bounds_s, from) =>
-          // TODO aggiorna stato
           view.setBounds(bounds_s)
           view.display(0, 0)
           ctx.self ! API.UpdateGUI(bounds, ctx.self)
+          Behaviors.same
+        case API.Msg(s) =>
+          view.setText(s)
+          Behaviors.same
+        case API.Stop() => // TODO
+          println("STOOOOOOOP")
           Behaviors.same
         case _ => Behaviors.same
 

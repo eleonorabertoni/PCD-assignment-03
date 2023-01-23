@@ -5,8 +5,10 @@ import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.Behaviors
 import assignment03.pt2.API.API
 import akka.cluster.typed.Cluster
-import assignment03.pt1.main.P2d
+import assignment03.pt1.main.{Boundary, P2d}
 import assignment03.pt1.main.P2d.P2d
+import assignment03.pt2.GUI.FiremenView
+
 import concurrent.duration.DurationInt
 import assignment03.pt2.RainSensorActor.{simulationIncrement, simulationOscillation}
 import assignment03.pt2.HubActor.*
@@ -41,4 +43,15 @@ object Root:
       ctx.system.receptionist ! Receptionist.Register(HubServiceKey, hub)
       ctx.system.receptionist ! Receptionist.Register(FireStationServiceKey, hub)
       Behaviors.empty
+    }
+
+  def apply(bounds: Boundary, view: FiremenView): Behavior[API] =
+    Behaviors.setup{ ctx =>
+      val viewer = ctx.spawn(Viewer(bounds, view), "viewer")
+      ctx.system.receptionist ! Receptionist.Register(ViewServiceKey, viewer)
+      Behaviors.receiveMessage{
+        case API.Stop() =>
+          viewer ! API.Stop()
+          Behaviors.same
+      }
     }
