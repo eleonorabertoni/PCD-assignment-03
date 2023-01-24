@@ -17,6 +17,7 @@ public class FiremenView {
 
     private final VisualiserFrame frame;
     private Boundary bounds = null;
+    //private Integer n = 3;
 
     /**
      * Creates a view of the specified size (in pixels)
@@ -28,11 +29,11 @@ public class FiremenView {
         frame = new VisualiserFrame(w, h);
     }
 
-    public void display(double vt, long iter) {
-        if(bounds == null){
+    public void display(int n) {
+        if (bounds == null) {
             throw new IllegalStateException("Bounds are not set");
-        }else {
-            frame.display(vt, iter, bounds);
+        } else {
+            frame.display(n);
         }
 
     }
@@ -51,22 +52,50 @@ public class FiremenView {
 
     public static class ZonePanel extends JPanel {
         private static JButton b;
+        private JPanel componentPanel;
+        private VisualiserPanel canvasPanel;
         private JLabel name;
         private JLabel l;
 
-        public ZonePanel(String s){
+        public ZonePanel(String s) {
+            componentPanel = new JPanel();
+            componentPanel.setLayout(new BoxLayout(componentPanel, BoxLayout.Y_AXIS));
+            canvasPanel = new VisualiserPanel(getWidth(), getHeight() / 2);
+
+            this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+
             b = new JButton("Disable Alarm");
             name = new JLabel(s);
-            l = new JLabel("");
+            l = new JLabel("BOH");
+            l.setOpaque(true);
+            l.setBackground(Color.red);
+            name.setOpaque(true);
+            name.setBackground(Color.yellow);
+            componentPanel.add(name);
+            componentPanel.add(b);
+            componentPanel.add(l);
+
+
             setBorder(BorderFactory.createLineBorder(Color.black));
-            add(name);
-            add(b);
-            add(l);
+
+            add(componentPanel);
+            add(canvasPanel);
+
+        }
+
+        @Override
+        public void paint(Graphics g) {
+            super.paint(g);
+        }
+
+        public void display(int n) {
+            canvasPanel.display(n);
         }
 
         public void addActionListener(ActionListener al) {
             b.addActionListener(al);
         }
+
         public void setLabelText(String s) {
             l.setText(s);
         }
@@ -81,15 +110,13 @@ public class FiremenView {
             setSize(w, h);
             setResizable(false);
 
-            for (int i = 2; i >= 0; i--) {
-                panels.add(new ZonePanel("Zone " + i));
+            for (int i = 0; i < 3; i++) {
+                var temp = new ZonePanel("Zone " + i);
+                getContentPane().add(temp);
+                panels.add(temp);
             }
 
             getContentPane().setLayout(new BoxLayout(this.getContentPane(), BoxLayout.X_AXIS));
-
-            for (int i = 2; i >= 0; i--) {
-                getContentPane().add(panels.get(i), BoxLayout.X_AXIS);
-            }
 
             addWindowListener(new WindowAdapter() {
                 public void windowClosing(WindowEvent ev) {
@@ -100,29 +127,33 @@ public class FiremenView {
                     System.exit(0);
                 }
             });
+
             this.setVisible(true);
         }
 
-        public static void setText(String s){
+        public static void setText(String s) {
             panels.get(0).setLabelText(s);
         }
 
         public static void setFocusOnSimulation() {
-           // panel.requestFocusInWindow();
+            // panel.requestFocusInWindow();
         }
 
         public static void setDisableButton(ActionListener al) {
             panels.get(0).addActionListener(al);
         }
 
-        public void display(double vt, long iter, Boundary bounds) {
+        public void display(int n) {
             try {
                 SwingUtilities.invokeAndWait(() -> {
-                    //panel.display(vt, iter, bounds);
+                    panels.get(0).display(n);
                     repaint();
                 });
-            } catch (Exception ex) {}
-        };
+            } catch (Exception ex) {
+            }
+        }
+
+        ;
 
         public void updateScale(double k) {
             //panel.updateScale(k);
@@ -131,84 +162,36 @@ public class FiremenView {
 
     }
 
-    public static class VisualiserPanel extends JPanel implements KeyListener {
+    public static class VisualiserPanel extends JPanel {
 
-        private Boundary bounds;
-
-        private long nIter;
-        private double vt;
-        private double scale = 0.3;
-
-        private long dx;
-        private long dy;
+        private int n ;
 
         public VisualiserPanel(int w, int h) {
             setSize(w, h);
-            dx = w / 2; //-20 anche qui prima
-            dy = h / 2 - 20;
-            this.addKeyListener(this);
             setFocusable(true);
             setFocusTraversalKeysEnabled(false);
             requestFocusInWindow();
         }
 
         public void paint(Graphics g) {
-            if (bounds != null) {
-                Graphics2D g2 = (Graphics2D) g;
+            Graphics2D g2 = (Graphics2D) g;
 
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                        RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setRenderingHint(RenderingHints.KEY_RENDERING,
-                        RenderingHints.VALUE_RENDER_QUALITY);
-                g2.clearRect(0, 0, this.getWidth(), this.getHeight());
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setRenderingHint(RenderingHints.KEY_RENDERING,
+                    RenderingHints.VALUE_RENDER_QUALITY);
+            g2.clearRect(0, 0, this.getWidth(), this.getHeight());
 
-                int x0 = getXcoord(bounds.x0());
-                int y0 = getYcoord(bounds.y0());
-
-                int wd = getXcoord(bounds.x1()) - x0;
-                int ht = y0 - getYcoord(bounds.y1());
-
-                g2.drawRect(x0, y0 - ht, wd, ht);
-
-                String time = String.format("%.2f", vt);
-                //g2.drawString(""+text.getText(), 5, 50);
-                g2.drawString(" - vt: " + time + " - nIter: " + nIter + " (UP for zoom in, DOWN for zoom out)", 2, 20);
+            for (int i = 0; i < n; i++) {
+                g2.drawOval(25, 25 + 25 * i, 20, 20);
             }
+
         }
 
-        private int getXcoord(double x) {
-            return (int) (dx + x * dx * scale);
+        public void display(int n) {
+            this.n = n;
         }
 
-        private int getYcoord(double y) {
-            return (int) (dy - y * dy * scale);
-        }
-
-
-        public void display(double vt, long iter, Boundary bounds) {
-            this.bounds = bounds;
-            this.vt = vt;
-            this.nIter = iter;
-        }
-
-        public void updateScale(double k) {
-            scale *= k;
-        }
-
-        @Override
-        public void keyPressed(KeyEvent e) {
-            if (e.getKeyCode() == 38) {        /* KEY UP */
-                scale *= 1.1;
-            } else if (e.getKeyCode() == 40) {    /* KEY DOWN */
-                scale *= 0.9;
-            }
-        }
-
-        public void keyReleased(KeyEvent e) {
-        }
-
-        public void keyTyped(KeyEvent e) {
-        }
     }
 }
 

@@ -4,7 +4,7 @@ import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.receptionist.Receptionist
 import akka.actor.typed.scaladsl.Behaviors
 import assignment03.pt1.main.P2d.P2d
-import assignment03.pt2.API.{API, Alarm, HUB_STATE, Msg}
+import assignment03.pt2.API.{API, Alarm, HUB_STATE, Msg, MsgSensor}
 import assignment03.pt2.API.HUB_STATE.*
 import assignment03.pt2.Root.{StatsServiceKey, ViewServiceKey}
 
@@ -41,12 +41,14 @@ object HubActor:
         Behaviors.receiveMessage {
           case StatsServiceKey.Listing(listing) if rainSensors.size != listing.size =>
             rainSensors = listing
+            if viewService != null then viewService ! MsgSensor(listing.size)
             println("MSG "+ listing)
             Behaviors.same
           case ViewServiceKey.Listing(listing) if listing.nonEmpty =>
             println("SET VIEW")
             viewService = listing.head
-            viewService ! Msg(state.toString)
+            viewService ! MsgSensor(listing.size)
+            viewService ! Msg(state.toString.trim)
             Behaviors.same
           case Alarm(msg) if state == FREE =>
             state = OCCUPIED

@@ -35,8 +35,12 @@ object Viewer:
           Behaviors.same
         case API.UpdateGUI(bounds_s, from) =>
           view.setBounds(bounds_s)
-          view.display(0, 0)
+          //view.display(4)
           ctx.self ! API.UpdateGUI(bounds, ctx.self)
+          Behaviors.same
+        case API.MsgSensor(n) =>
+          println("OH OH OH OHO OJOHOHOHOHO"+n)
+          view.display(n)
           Behaviors.same
         case API.Msg(s) =>
           view.setText(s)
