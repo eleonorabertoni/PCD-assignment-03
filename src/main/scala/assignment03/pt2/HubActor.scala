@@ -50,7 +50,7 @@ object HubActor:
             println("SET VIEW")
             viewService = listing.head
             viewService ! MsgSensor(listing.size)
-            viewService ! Msg(state.toString.trim)
+            viewService ! Msg(state.toString)
             viewService ! Msg(zoneState.toString)
             Behaviors.same
           case Alarm(msg) if state == FREE =>
