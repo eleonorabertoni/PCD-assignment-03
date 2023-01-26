@@ -49,6 +49,7 @@ object Viewer:
           Behaviors.same
         case API.Stop() => // TODO
           println("STOOOOOOOP")
+          fireStations.head ! API.Stop()
           Behaviors.same
         case _ => Behaviors.same
 

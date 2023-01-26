@@ -91,7 +91,7 @@ object RainSensorActor:
                 timers.startSingleTimer(Measure(simPred(data.lastValue, it)), period)
                 //ctx.self ! Measure(data.lastValue)
                 Behaviors.same
-              case Msg("OK") =>
+              case Msg("SAMPLING") =>
                 println("DATA" + data)
                 println("OK")
                 timers.cancelAll()
