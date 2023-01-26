@@ -16,8 +16,8 @@ import assignment03.pt2.HubActor.*
 import scala.util.Random
 
 object Root:
-  val StatsServiceKey: ServiceKey[API] = ServiceKey[API]("StatsService") //TODO per zona
-  val HubServiceKey: ServiceKey[API] = ServiceKey[API]("HubService") // TODO per zona
+  val SensorsServiceKey: ServiceKey[API] = ServiceKey[API]("StatsService") //TODO per zona
+  val HubServiceKey: ServiceKey[API] = ServiceKey[API]("HubService")
   val FireStationServiceKey: ServiceKey[API] = ServiceKey[API]("FireStation") // TODO per tutti gli hub
   val ViewServiceKey: ServiceKey[API] = ServiceKey[API]("ViewService") // TODO per tutti quelli che devono parlare con la view
 
@@ -26,15 +26,15 @@ object Root:
    */
   def apply(pos: P2d, simPred: (Double, Option[Iterator[Double]])=> Double, it: Option[Iterator[Double]], i: Int): Behavior[API | Receptionist.Listing] =
     Behaviors.setup { ctx =>
-    //val cluster = Cluster(ctx.system)
-    //println("CLUSTER "+cluster.manager)
-    //if (cluster.selfMember.hasRole("backend"))
     val rainSensor = ctx.spawn(RainSensorActor(pos, PERIOD, THRESHOLD, simPred, it).createRainSensorBehavior(0), "backend" + i)
-    ctx.system.receptionist ! Receptionist.Register(StatsServiceKey, rainSensor)
-      //rainSensor ! API.Measure(0)
+    ctx.system.receptionist ! Receptionist.Register(SensorsServiceKey, rainSensor)
     Behaviors.empty
   }
 
+  /**
+   * Factory for stations
+   *
+   */
   def apply(pos: P2d, threshold: Double, i: Int): Behavior[API] =
     Behaviors.setup { ctx =>
       //val cluster = Cluster(ctx.system)
@@ -45,13 +45,12 @@ object Root:
       Behaviors.empty
     }
 
-  def apply(bounds: Boundary, view: FiremenView): Behavior[API] =
+  def apply(view: FiremenView): Behavior[API] =
     Behaviors.setup{ ctx =>
-      val viewer = ctx.spawn(Viewer(bounds, view), "viewer")
+      val viewer = ctx.spawn(Viewer(view), "viewer")
+      view.setDisableButton(a => {
+        println("NOOOOO")
+        viewer ! API.Stop()})
       ctx.system.receptionist ! Receptionist.Register(ViewServiceKey, viewer)
-      Behaviors.receiveMessage{
-        case API.Stop() =>
-          viewer ! API.Stop()
-          Behaviors.same
-      }
+      Behaviors.same
     }

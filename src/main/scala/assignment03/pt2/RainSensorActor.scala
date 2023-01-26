@@ -8,7 +8,7 @@ import assignment03.pt2.API
 import assignment03.pt2.API.*
 import assignment03.pt2.API.STATE
 import assignment03.pt2.API.STATE.*
-import assignment03.pt2.Root.{HubServiceKey, StatsServiceKey}
+import assignment03.pt2.Root.{HubServiceKey, SensorsServiceKey}
 
 import concurrent.duration.{DurationInt, FiniteDuration}
 import scala.util.Random
@@ -31,7 +31,7 @@ object RainSensorActor:
 
           ctx.spawnAnonymous[Receptionist.Listing] {
             Behaviors.setup { internal =>
-              internal.system.receptionist ! Receptionist.Subscribe(StatsServiceKey, internal.self)
+              internal.system.receptionist ! Receptionist.Subscribe(SensorsServiceKey, internal.self)
               internal.system.receptionist ! Receptionist.Subscribe(HubServiceKey, internal.self)
               Behaviors.receiveMessage {
                 case msg: Receptionist.Listing =>
@@ -97,7 +97,7 @@ object RainSensorActor:
                 timers.cancelAll()
                 ctx.self ! Start(0, SAMPLING) // TODO
                 Behaviors.same
-              case StatsServiceKey.Listing(listing) if others.size != listing.size =>
+              case SensorsServiceKey.Listing(listing) if others.size != listing.size =>
                 others = listing
                 println("MSG "+ listing)
                 Behaviors.same

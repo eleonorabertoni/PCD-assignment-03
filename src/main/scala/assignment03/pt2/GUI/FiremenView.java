@@ -1,7 +1,5 @@
 package assignment03.pt2.GUI;
 
-import assignment03.pt1.main.Boundary;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -15,7 +13,6 @@ import java.awt.event.*;
 public class FiremenView {
 
     private final VisualiserFrame frame;
-    private Boundary bounds = null;
 
     /**
      * Creates a view of the specified size (in pixels)
@@ -28,12 +25,7 @@ public class FiremenView {
     }
 
     public void display(int n) {
-        if (bounds == null) {
-            throw new IllegalStateException("Bounds are not set");
-        } else {
             frame.display(n);
-        }
-
     }
 
     public void setText(String text) {
@@ -42,10 +34,6 @@ public class FiremenView {
     
     public void setZoneLabel(String s){
         this.frame.setZoneLabel(s);
-    }
-
-    public void setBounds(Boundary bounds) {
-        this.bounds = bounds;
     }
 
     public void setDisableButton(ActionListener al) {

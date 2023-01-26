@@ -7,7 +7,7 @@ import assignment03.pt1.main.P2d.P2d
 import assignment03.pt2.API.{API, Alarm, HUB_STATE, Msg, MsgSensor, STATE, Stop}
 import assignment03.pt2.API.HUB_STATE.*
 import assignment03.pt2.API.STATE.*
-import assignment03.pt2.Root.{StatsServiceKey, ViewServiceKey}
+import assignment03.pt2.Root.{SensorsServiceKey, ViewServiceKey}
 
 import concurrent.duration.FiniteDuration
 import concurrent.duration.DurationInt
@@ -26,7 +26,7 @@ object HubActor:
 
         ctx.spawnAnonymous[Receptionist.Listing] {
           Behaviors.setup { internal =>
-            internal.system.receptionist ! Receptionist.Subscribe(StatsServiceKey, internal.self)
+            internal.system.receptionist ! Receptionist.Subscribe(SensorsServiceKey, internal.self)
             internal.system.receptionist ! Receptionist.Subscribe(ViewServiceKey, internal.self)
             Behaviors.receiveMessage {
               case msg: Receptionist.Listing =>
@@ -41,7 +41,7 @@ object HubActor:
         var state: HUB_STATE = FREE
         var zoneState: STATE = SAMPLING
         Behaviors.receiveMessage {
-          case StatsServiceKey.Listing(listing) if rainSensors.size != listing.size =>
+          case SensorsServiceKey.Listing(listing) if rainSensors.size != listing.size =>
             rainSensors = listing
             if viewService != null then viewService ! MsgSensor(listing.size)
             println("MSG "+ listing)
