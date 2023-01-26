@@ -4,7 +4,8 @@ import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.receptionist.Receptionist
 import akka.actor.typed.scaladsl.Behaviors
 import assignment03.pt1.main.Boundary
-import assignment03.pt2.API.API
+import assignment03.pt2.API.{API, HUB_STATE, STATE}
+import assignment03.pt2.API.STATE.SAMPLING
 import assignment03.pt2.GUI.FiremenView
 import assignment03.pt2.Root.FireStationServiceKey
 
@@ -39,14 +40,19 @@ object Viewer:
           ctx.self ! API.UpdateGUI(bounds, ctx.self)
           Behaviors.same
         case API.MsgSensor(n) =>
-          println("OH OH OH OHO OJOHOHOHOHO"+n)
+          println("OH OH OH OHO"+n)
           view.display(n)
           Behaviors.same
-        case API.Msg(s) =>
-          view.setText(s)
+        case API.Station(state) =>
+          println("NOOOOOOO VIEWER")
+          view.setText(state.toString)
+          Behaviors.same
+        case API.Zone(state) =>
+          println("NOOOOOOO VIEWER")
+          view.setZone(state.toString)
           Behaviors.same
         case API.Stop() => // TODO
-          println("STOOOOOOOP")
+          fireStations.head ! API.Zone(SAMPLING)
           Behaviors.same
         case _ => Behaviors.same
 

@@ -77,25 +77,26 @@ object RainSensorActor:
                   if (hub.nonEmpty)
                     hub.get ! Alarm(data.values)
                   data = data.copy(state = ALARM)
+                  timers.startSingleTimer(Measure(simPred(data.lastValue, it)), period) //!!!
                 else
                   if (ref == ctx.self)
                     println("ALLARME LOCALE")
                     data = data.copy(state = ALARM)
                     timers.startSingleTimer(Measure(simPred(data.lastValue, it)), period)
                Behaviors.same
-              case Msg("SOLVING") =>
-                println("DATA" + data)
-                println("SOLVING")
-                data = data.copy(state = SOLVING)
-                timers.cancelAll()
-                timers.startSingleTimer(Measure(simPred(data.lastValue, it)), period)
-                //ctx.self ! Measure(data.lastValue)
-                Behaviors.same
-              case Msg("OK") =>
-                println("DATA" + data)
-                println("OK")
-                timers.cancelAll()
-                ctx.self ! Start(0, SAMPLING) // TODO
+              case Zone(state) =>
+                if state == SOLVING then 
+                  println("DATA" + data)
+                  println("SOLVING")
+                  data = data.copy(state = SOLVING)
+                  timers.cancelAll()
+                  timers.startSingleTimer(Measure(simPred(data.lastValue, it)), period)
+                  //ctx.self ! Measure(data.lastValue)
+                if state == SAMPLING then
+                  println("DATA" + data)
+                  println("OK")
+                  timers.cancelAll()
+                  ctx.self ! Start(0, SAMPLING) // TODO
                 Behaviors.same
               case StatsServiceKey.Listing(listing) if others.size != listing.size =>
                 others = listing

@@ -42,6 +42,10 @@ public class FiremenView {
         this.frame.setText(text);
     }
 
+    public void setZone(String text) {
+        this.frame.setZone(text);
+    }
+
     public void setBounds(Boundary bounds) {
         this.bounds = bounds;
     }
@@ -56,6 +60,7 @@ public class FiremenView {
         private VisualiserPanel canvasPanel;
         private JLabel name;
         private JLabel l;
+        private JLabel zone;
 
         public ZonePanel(String s) {
             componentPanel = new JPanel();
@@ -64,16 +69,21 @@ public class FiremenView {
 
             this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
-            b = new JButton("Disable Alarm");
+            b = new JButton("Disable Alarm "+s);
             name = new JLabel(s);
-            l = new JLabel("BOH");
-            l.setOpaque(true);
-            l.setBackground(Color.red);
             name.setOpaque(true);
             name.setBackground(Color.yellow);
+            l = new JLabel("STATION");
+            l.setOpaque(true);
+            l.setBackground(Color.red);
+            zone = new JLabel("ZONE");
+            zone.setOpaque(true);
+            zone.setBackground(Color.pink);
+            
             componentPanel.add(name);
             componentPanel.add(b);
             componentPanel.add(l);
+            componentPanel.add(zone);
 
 
             setBorder(BorderFactory.createLineBorder(Color.black));
@@ -99,22 +109,29 @@ public class FiremenView {
         public void setLabelText(String s) {
             l.setText(s);
         }
+        
+        public void setZone(String s){
+            zone.setText(s);
+        }
     }
 
     public static class VisualiserFrame extends JFrame {
 
-        private static java.util.List<ZonePanel> panels = new java.util.LinkedList<ZonePanel>();
+        //private static java.util.List<ZonePanel> panels = new java.util.LinkedList<>();
+        private static ZonePanel panel;
 
         public VisualiserFrame(int w, int h) {
 
             setSize(w, h);
             setResizable(false);
 
-            for (int i = 0; i < 3; i++) {
-                var temp = new ZonePanel("Zone " + i);
-                getContentPane().add(temp);
-                panels.add(temp);
-            }
+            //for (int i = 0; i < 3; i++) {
+            //    var temp = new ZonePanel("Zone " + i);
+            //    getContentPane().add(temp);
+            //    panels.add(temp);
+            //}
+            panel = new ZonePanel("Zone 0");
+            getContentPane().add(panel);
 
             getContentPane().setLayout(new BoxLayout(this.getContentPane(), BoxLayout.X_AXIS));
 
@@ -132,7 +149,11 @@ public class FiremenView {
         }
 
         public static void setText(String s) {
-            panels.get(0).setLabelText(s);
+            panel.setLabelText(s);
+        }
+        
+        public static void setZone(String s){
+            panel.setZone(s);
         }
 
         public static void setFocusOnSimulation() {
@@ -140,13 +161,14 @@ public class FiremenView {
         }
 
         public static void setDisableButton(ActionListener al) {
-            panels.get(0).addActionListener(al);
+            //System.out.println(panels.get(0).name);
+            panel.addActionListener(al);
         }
 
         public void display(int n) {
             try {
                 SwingUtilities.invokeAndWait(() -> {
-                    panels.get(0).display(n);
+                    panel.display(n);
                     repaint();
                 });
             } catch (Exception ex) {
@@ -164,7 +186,7 @@ public class FiremenView {
 
     public static class VisualiserPanel extends JPanel {
 
-        private int n ;
+        private int n;
 
         public VisualiserPanel(int w, int h) {
             setSize(w, h);
