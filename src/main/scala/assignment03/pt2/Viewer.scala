@@ -43,7 +43,9 @@ object Viewer:
           view.display(n)
           Behaviors.same
         case API.Msg(s) =>
-          view.setText(s)
+          println("MSG")
+          println(s)
+          if s == "FREE" || s == "OCCUPIED" then view.setText(s) else view.setZoneLabel(s)
           Behaviors.same
         case API.Stop() => // TODO
           println("STOOOOOOOP")

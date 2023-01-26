@@ -38,6 +38,7 @@ object HubActor:
         var rainSensors: Set[ActorRef[API]] = Set()
         var viewService: ActorRef[API] = null 
         var state: HUB_STATE = FREE
+        var zoneState: String = "SAMPLING"
         Behaviors.receiveMessage {
           case StatsServiceKey.Listing(listing) if rainSensors.size != listing.size =>
             rainSensors = listing
@@ -49,6 +50,7 @@ object HubActor:
             viewService = listing.head
             viewService ! MsgSensor(listing.size)
             viewService ! Msg(state.toString.trim)
+            viewService ! Msg(zoneState)
             Behaviors.same
           case Alarm(msg) if state == FREE =>
             state = OCCUPIED
