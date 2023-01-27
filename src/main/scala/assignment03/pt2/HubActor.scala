@@ -1,13 +1,12 @@
 package assignment03.pt2
 
 import akka.actor.typed.{ActorRef, Behavior}
-import akka.actor.typed.receptionist.Receptionist
+import akka.actor.typed.receptionist.{Receptionist, ServiceKey}
 import akka.actor.typed.scaladsl.Behaviors
 import assignment03.pt1.main.P2d.P2d
 import assignment03.pt2.API.{API, Alarm, HUB_STATE, Msg, MsgSensor, STATE, Stop}
 import assignment03.pt2.API.HUB_STATE.*
 import assignment03.pt2.API.STATE.*
-import assignment03.pt2.Root.{SensorsServiceKey, ViewServiceKey}
 
 import concurrent.duration.FiniteDuration
 import concurrent.duration.DurationInt
@@ -17,17 +16,17 @@ trait HubActor:
 
 object HubActor:
 
-  def apply(pos: P2d, period: FiniteDuration, threshold: Double): HubActor = HubActorImpl(pos, period, threshold)
+  def apply(pos: P2d, period: FiniteDuration, threshold: Double, sensorsServiceKey: ServiceKey[API], viewServiceKey: ServiceKey[API]): HubActor = HubActorImpl(pos, period, threshold, sensorsServiceKey, viewServiceKey)
 
-  class HubActorImpl(pos: P2d, period: FiniteDuration, threshold: Double) extends HubActor:
+  class HubActorImpl(pos: P2d, period: FiniteDuration, threshold: Double, sensorsServiceKey: ServiceKey[API], viewServiceKey: ServiceKey[API]) extends HubActor:
 
     override def createHubBehavior: Behavior[API | Receptionist.Listing] =
       Behaviors.setup[API | Receptionist.Listing] { ctx =>
 
         ctx.spawnAnonymous[Receptionist.Listing] {
           Behaviors.setup { internal =>
-            internal.system.receptionist ! Receptionist.Subscribe(SensorsServiceKey, internal.self)
-            internal.system.receptionist ! Receptionist.Subscribe(ViewServiceKey, internal.self)
+            internal.system.receptionist ! Receptionist.Subscribe(sensorsServiceKey, internal.self)
+            internal.system.receptionist ! Receptionist.Subscribe(viewServiceKey, internal.self)
             Behaviors.receiveMessage {
               case msg: Receptionist.Listing =>
                 ctx.self ! msg
@@ -41,15 +40,15 @@ object HubActor:
         var state: HUB_STATE = FREE
         var zoneState: STATE = SAMPLING
         Behaviors.receiveMessage {
-          case SensorsServiceKey.Listing(listing) if rainSensors.size != listing.size =>
+          case sensorsServiceKey.Listing(listing) if rainSensors.size != listing.size =>
             rainSensors = listing
             if viewService != null then viewService ! MsgSensor(listing.size)
             println("MSG "+ listing)
             Behaviors.same
-          case ViewServiceKey.Listing(listing) if listing.nonEmpty =>
+          case viewServiceKey.Listing(listing) if listing.nonEmpty =>
             println("SET VIEW")
             viewService = listing.head
-            viewService ! MsgSensor(listing.size)
+            viewService ! MsgSensor(rainSensors.size)
             viewService ! Msg(state.toString)
             viewService ! Msg(zoneState.toString)
             Behaviors.same

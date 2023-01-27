@@ -16,18 +16,18 @@ import assignment03.pt2.HubActor.*
 import scala.util.Random
 
 object Root:
-  val SensorsServiceKey: ServiceKey[API] = ServiceKey[API]("StatsService") //TODO per zona
+
+  val SensorsServiceKey: ServiceKey[API] = ServiceKey[API]("StatsService")
   val HubServiceKey: ServiceKey[API] = ServiceKey[API]("HubService")
-  val FireStationServiceKey: ServiceKey[API] = ServiceKey[API]("FireStation") // TODO per tutti gli hub
-  val ViewServiceKey: ServiceKey[API] = ServiceKey[API]("ViewService") // TODO per tutti quelli che devono parlare con la view
+  val ViewServiceKey: ServiceKey[API] = ServiceKey[API]("ViewService")
 
   /**
    * Factory for RainSensor
    */
-  def apply(pos: P2d, simPred: (Double, Option[Iterator[Double]])=> Double, it: Option[Iterator[Double]], i: Int): Behavior[API | Receptionist.Listing] =
+  def apply(pos: P2d, simPred: (Double, Option[Iterator[Double]])=> Double, it: Option[Iterator[Double]], i: Int, sensorsServiceKey: ServiceKey[API], hubServiceKey: ServiceKey[API]): Behavior[API | Receptionist.Listing] =
     Behaviors.setup { ctx =>
-    val rainSensor = ctx.spawn(RainSensorActor(pos, PERIOD, THRESHOLD, simPred, it).createRainSensorBehavior(0), "backend" + i)
-    ctx.system.receptionist ! Receptionist.Register(SensorsServiceKey, rainSensor)
+    val rainSensor = ctx.spawn(RainSensorActor(pos, PERIOD, THRESHOLD, simPred, it, sensorsServiceKey, hubServiceKey).createRainSensorBehavior(0), "backend" + i)
+    ctx.system.receptionist ! Receptionist.Register(sensorsServiceKey, rainSensor)
     Behaviors.empty
   }
 
@@ -35,22 +35,21 @@ object Root:
    * Factory for stations
    *
    */
-  def apply(pos: P2d, threshold: Double, i: Int): Behavior[API] =
+  def apply(pos: P2d, threshold: Double, i: Int, hubServiceKey: ServiceKey[API], viewServiceKey: ServiceKey[API], sensorsServiceKey: ServiceKey[API]): Behavior[API] =
     Behaviors.setup { ctx =>
-      //val cluster = Cluster(ctx.system)
-      val hub = ctx.spawn(HubActor(pos, 1000.millis, threshold).createHubBehavior, "hub" + i)
-      //if (cluster.selfMember.hasRole("hub"))
-      ctx.system.receptionist ! Receptionist.Register(HubServiceKey, hub)
-      ctx.system.receptionist ! Receptionist.Register(FireStationServiceKey, hub)
+      val hub = ctx.spawn(HubActor(pos, 1000.millis, threshold, sensorsServiceKey, viewServiceKey).createHubBehavior, "hub" + i)
+      ctx.system.receptionist ! Receptionist.Register(hubServiceKey, hub)
       Behaviors.empty
     }
 
-  def apply(view: FiremenView): Behavior[API] =
+  /**
+   * Factory for viewer
+   *
+   */
+  def apply(view: FiremenView, viewServiceKey: ServiceKey[API], hubServiceKey: ServiceKey[API]): Behavior[API] =
     Behaviors.setup{ ctx =>
-      val viewer = ctx.spawn(Viewer(view), "viewer")
-      view.setDisableButton(a => {
-        println("NOOOOO")
-        viewer ! API.Stop()})
-      ctx.system.receptionist ! Receptionist.Register(ViewServiceKey, viewer)
+      val viewer = ctx.spawn(Viewer(view, hubServiceKey), "viewer")
+      view.setDisableButton(a => {viewer ! API.Stop()})
+      ctx.system.receptionist ! Receptionist.Register(viewServiceKey, viewer)
       Behaviors.same
     }

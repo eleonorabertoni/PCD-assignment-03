@@ -1,6 +1,6 @@
 package assignment03.pt2
 
-import akka.actor.typed.receptionist.Receptionist
+import akka.actor.typed.receptionist.{Receptionist, ServiceKey}
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.Behaviors
 import assignment03.pt1.main.P2d.P2d
@@ -8,7 +8,6 @@ import assignment03.pt2.API
 import assignment03.pt2.API.*
 import assignment03.pt2.API.STATE
 import assignment03.pt2.API.STATE.*
-import assignment03.pt2.Root.{HubServiceKey, SensorsServiceKey}
 
 import concurrent.duration.{DurationInt, FiniteDuration}
 import scala.util.Random
@@ -17,7 +16,7 @@ trait RainSensorActor
 
 object RainSensorActor:
 
-  def apply(pos:P2d, period: FiniteDuration, threshold: Double, simPred: (Double, Option[Iterator[Double]]) => Double, iterator: Option[Iterator[Double]]) = RainSensorActorImpl(pos, period, threshold, simPred, iterator)
+  def apply(pos:P2d, period: FiniteDuration, threshold: Double, simPred: (Double, Option[Iterator[Double]]) => Double, iterator: Option[Iterator[Double]], sensorsServiceKey: ServiceKey[API], hubServiceKey: ServiceKey[API]) = RainSensorActorImpl(pos, period, threshold, simPred, iterator, sensorsServiceKey, hubServiceKey)
 
   def simulationIncrement(inc: Double): (Double, Option[Iterator[Double]]) => Double =
     (n, it) => if it.nonEmpty then n + it.get.next() + inc else n + inc
@@ -25,14 +24,14 @@ object RainSensorActor:
   def simulationOscillation(rand: Random, num: Int): (Double,  Option[Iterator[Double]]) => Double =
     (n, it) => if it.nonEmpty then n + it.get.next() * rand.nextInt(num).toDouble else n + rand.nextInt(num)
   //TODO ATTORI POSSONO AVERE TUTTO QUESTO STATO ????
-  class RainSensorActorImpl(pos: P2d, period: FiniteDuration, threshold: Double, simPred: (Double, Option[Iterator[Double]]) => Double, it: Option[Iterator[Double]]) extends RainSensorActor:
+  class RainSensorActorImpl(pos: P2d, period: FiniteDuration, threshold: Double, simPred: (Double, Option[Iterator[Double]]) => Double, it: Option[Iterator[Double]], sensorsServiceKey: ServiceKey[API], hubServiceKey: ServiceKey[API]) extends RainSensorActor:
       def createRainSensorBehavior(start: Double): Behavior[API | Receptionist.Listing] =
         Behaviors.setup[API | Receptionist.Listing] { ctx =>
 
           ctx.spawnAnonymous[Receptionist.Listing] {
             Behaviors.setup { internal =>
-              internal.system.receptionist ! Receptionist.Subscribe(SensorsServiceKey, internal.self)
-              internal.system.receptionist ! Receptionist.Subscribe(HubServiceKey, internal.self)
+              internal.system.receptionist ! Receptionist.Subscribe(sensorsServiceKey, internal.self)
+              internal.system.receptionist ! Receptionist.Subscribe(hubServiceKey, internal.self)
               Behaviors.receiveMessage {
                 case msg: Receptionist.Listing =>
                   ctx.self ! msg
@@ -89,7 +88,6 @@ object RainSensorActor:
                 data = data.copy(state = SOLVING)
                 timers.cancelAll()
                 timers.startSingleTimer(Measure(simPred(data.lastValue, it)), period)
-                //ctx.self ! Measure(data.lastValue)
                 Behaviors.same
               case Msg("SAMPLING") =>
                 println("DATA" + data)
@@ -97,11 +95,16 @@ object RainSensorActor:
                 timers.cancelAll()
                 ctx.self ! Start(0, SAMPLING) // TODO
                 Behaviors.same
-              case SensorsServiceKey.Listing(listing) if others.size != listing.size =>
+              case sensorsServiceKey.Listing(listing) if others.size != listing.size =>
                 others = listing
                 println("MSG "+ listing)
+                if (data.values.count(v => v > THRESHOLD) > others.size / 2)
+                  println("ALLARME GLOBALE CAMBIA POS")
+                  if (hub.nonEmpty)
+                    hub.get ! Alarm(data.values)
+                  data = data.copy(state = ALARM)
                 Behaviors.same
-              case HubServiceKey.Listing(listing) if listing.nonEmpty =>
+              case hubServiceKey.Listing(listing) if listing.nonEmpty =>
                 hub = Some(listing.head)
                 Behaviors.same
               case _ =>
