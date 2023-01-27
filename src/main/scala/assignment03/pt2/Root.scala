@@ -17,9 +17,13 @@ import scala.util.Random
 
 object Root:
 
-  val SensorsServiceKey: ServiceKey[API] = ServiceKey[API]("StatsService")
-  val HubServiceKey: ServiceKey[API] = ServiceKey[API]("HubService")
-  val ViewServiceKey: ServiceKey[API] = ServiceKey[API]("ViewService")
+  val SensorsServiceKeyZone0: ServiceKey[API] = ServiceKey[API]("StatsService")
+  val HubServiceKeyZone0: ServiceKey[API] = ServiceKey[API]("HubService")
+  val ViewServiceKeyZone0: ServiceKey[API] = ServiceKey[API]("ViewService")
+
+  val SensorsServiceKeyZone1: ServiceKey[API] = ServiceKey[API]("StatsService1")
+  val HubServiceKeyZone1: ServiceKey[API] = ServiceKey[API]("HubService1")
+  val ViewServiceKeyZone1: ServiceKey[API] = ServiceKey[API]("ViewService1")
 
   /**
    * Factory for RainSensor
