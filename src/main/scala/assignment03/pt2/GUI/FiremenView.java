@@ -129,11 +129,7 @@ public class FiremenView {
         public static void setZoneLabel(String s){
             panel.setZoneLabel(s);
         }
-
-        public static void setFocusOnSimulation() {
-            // panel.requestFocusInWindow();
-        }
-
+        
         public static void setDisableButton(ActionListener al) {
             panel.addActionListener(al);
         }
@@ -147,13 +143,6 @@ public class FiremenView {
             } catch (Exception ex) {
             }
         }
-
-        ;
-
-        public void updateScale(double k) {
-            //panel.updateScale(k);
-        }
-
 
     }
 

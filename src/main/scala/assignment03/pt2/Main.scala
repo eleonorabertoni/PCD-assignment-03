@@ -22,7 +22,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 /** Zone 0 **/
 @main def hubZone0: Unit =
-  startupWithRole("hub", seeds.head)(Root(P2d(1,1), 30, 0, HubServiceKeyZone0, ViewServiceKeyZone0, SensorsServiceKeyZone0))
+  startupWithRole("hub", seeds.head)(Root(P2d(1,1), 0, HubServiceKeyZone0, ViewServiceKeyZone0, SensorsServiceKeyZone0))
 
 @main def backend0Zone0: Unit =
   val it = Iterator.iterate(1.0)(_ * -1)
@@ -38,7 +38,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 /** Zone 1 **/
 @main def hubZone1: Unit =
-  startupWithRole("hub", seeds.last)(Root(P2d(1,1), 30, 1, HubServiceKeyZone1, ViewServiceKeyZone1, SensorsServiceKeyZone1))
+  startupWithRole("hub", seeds.last)(Root(P2d(1,1), 1, HubServiceKeyZone1, ViewServiceKeyZone1, SensorsServiceKeyZone1))
 
 @main def backend0Zone1: Unit =
   val it = Iterator.iterate(1.0)(_ * -1)

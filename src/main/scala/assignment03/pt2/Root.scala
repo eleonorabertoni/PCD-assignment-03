@@ -11,7 +11,7 @@ import assignment03.pt2.GUI.FiremenView
 
 import concurrent.duration.DurationInt
 import assignment03.pt2.RainSensorActor.{simulationIncrement, simulationOscillation}
-import assignment03.pt2.HubActor.*
+import assignment03.pt2.StationActor.*
 
 import scala.util.Random
 
@@ -39,9 +39,9 @@ object Root:
    * Factory for stations
    *
    */
-  def apply(pos: P2d, threshold: Double, i: Int, hubServiceKey: ServiceKey[API], viewServiceKey: ServiceKey[API], sensorsServiceKey: ServiceKey[API]): Behavior[API] =
+  def apply(pos: P2d, i: Int, hubServiceKey: ServiceKey[API], viewServiceKey: ServiceKey[API], sensorsServiceKey: ServiceKey[API]): Behavior[API] =
     Behaviors.setup { ctx =>
-      val hub = ctx.spawn(HubActor(pos, 1000.millis, threshold, sensorsServiceKey, viewServiceKey).createHubBehavior, "hub" + i)
+      val hub = ctx.spawn(StationActor(pos, sensorsServiceKey, viewServiceKey).createHubBehavior, "hub" + i)
       ctx.system.receptionist ! Receptionist.Register(hubServiceKey, hub)
       Behaviors.empty
     }

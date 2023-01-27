@@ -9,12 +9,12 @@ import assignment03.pt2.Root.{HubServiceKeyZone0, HubServiceKeyZone1, ViewServic
 import assignment03.pt2.{API, Root, Viewer, startupWithRole}
 
 def launch(name: String, port: Int, viewServiceKey: ServiceKey[API], hubServiceKey: ServiceKey[API]): Unit =
-  val N_RAIN_SENSORS: Int = 4
 
   /** View initialized **/
   val simulationSize = 500
   val view = FiremenView(simulationSize, simulationSize, name)
-
+  
+  /** View actor **/
   startupWithRole("view", port)(Root(view, viewServiceKey, hubServiceKey))
 
 @main def GUIZone0(): Unit =
