@@ -8,12 +8,12 @@ import assignment03.pt2.API.API
 import assignment03.pt2.Root.{HubServiceKeyZone0, HubServiceKeyZone1, ViewServiceKeyZone0, ViewServiceKeyZone1}
 import assignment03.pt2.{API, Root, Viewer, startupWithRole}
 
-def launch(string: String, port: Int, viewServiceKey: ServiceKey[API], hubServiceKey: ServiceKey[API]): Unit =
+def launch(name: String, port: Int, viewServiceKey: ServiceKey[API], hubServiceKey: ServiceKey[API]): Unit =
   val N_RAIN_SENSORS: Int = 4
 
   /** View initialized **/
   val simulationSize = 500
-  val view = FiremenView(simulationSize, simulationSize)
+  val view = FiremenView(simulationSize, simulationSize, name)
 
   startupWithRole("view", port)(Root(view, viewServiceKey, hubServiceKey))
 
@@ -22,7 +22,7 @@ def launch(string: String, port: Int, viewServiceKey: ServiceKey[API], hubServic
 
 @main def GUIZone1(): Unit =
   launch("Zone 1", 9998, ViewServiceKeyZone1, HubServiceKeyZone1)
-  
+
 
 
 

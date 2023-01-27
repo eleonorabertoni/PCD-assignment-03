@@ -20,8 +20,8 @@ public class FiremenView {
      * @param w
      * @param h
      */
-    public FiremenView(int w, int h) {
-        frame = new VisualiserFrame(w, h);
+    public FiremenView(int w, int h, String zone) {
+        frame = new VisualiserFrame(w, h, zone);
     }
 
     public void display(int n) {
@@ -29,11 +29,11 @@ public class FiremenView {
     }
 
     public void setText(String text) {
-        this.frame.setText(text);
+        this.frame.setText("STATION: "+text);
     }
     
     public void setZoneLabel(String s){
-        this.frame.setZoneLabel(s);
+        this.frame.setZoneLabel("ZONE: "+s);
     }
 
     public void setDisableButton(ActionListener al) {
@@ -41,42 +41,35 @@ public class FiremenView {
     }
 
     public static class ZonePanel extends JPanel {
-        private static JButton b;
-        private JPanel componentPanel;
-        private VisualiserPanel canvasPanel;
-        private JLabel name;
-        private JLabel l;
-        private JLabel zone;
+        private static JButton button;
+        private final JLabel station;
+        private final JLabel zone;
+        private final VisualiserPanel canvasPanel;
+
 
         public ZonePanel(String s) {
-            componentPanel = new JPanel();
+            JPanel componentPanel = new JPanel();
             componentPanel.setLayout(new BoxLayout(componentPanel, BoxLayout.Y_AXIS));
             canvasPanel = new VisualiserPanel(getWidth(), getHeight() / 2);
 
             this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
-            b = new JButton("Disable Alarm");
-            name = new JLabel(s);
-            l = new JLabel("BOH");
-            l.setOpaque(true);
-            l.setBackground(Color.red);
-            name.setOpaque(true);
-            name.setBackground(Color.yellow);
-            zone = new JLabel("BAAAA");
-            zone.setOpaque(true);
-            zone.setBackground(Color.blue);
-            
-            
-            componentPanel.add(name);
-            componentPanel.add(b);
-            componentPanel.add(l);
-            componentPanel.add(zone);
+            button = new JButton("Disable Alarm");
+            station = new JLabel("STATION: //");
+            zone = new JLabel("ZONE: //");
 
+            componentPanel.add(new JLabel(s));
+            componentPanel.add(station);
+            componentPanel.add(zone);
+            componentPanel.add(button);
+
+            this.setBackground(Color.pink);
+            componentPanel.setBackground(Color.pink);
 
             setBorder(BorderFactory.createLineBorder(Color.black));
-
             add(componentPanel);
             add(canvasPanel);
+            canvasPanel.setBackground(Color.pink);
 
         }
 
@@ -90,11 +83,11 @@ public class FiremenView {
         }
 
         public void addActionListener(ActionListener al) {
-            b.addActionListener(al);
+            button.addActionListener(al);
         }
 
         public void setLabelText(String s) {
-            l.setText(s);
+            station.setText(s);
         }
         
         public void setZoneLabel(String s){
@@ -106,12 +99,12 @@ public class FiremenView {
 
         private static ZonePanel panel;
 
-        public VisualiserFrame(int w, int h) {
+        public VisualiserFrame(int w, int h, String zone) {
 
             setSize(w, h);
             setResizable(false);
             
-            panel = new ZonePanel("Zone " + 0);
+            panel = new ZonePanel(zone);
             getContentPane().add(panel);
 
             getContentPane().setLayout(new BoxLayout(this.getContentPane(), BoxLayout.X_AXIS));
@@ -185,7 +178,8 @@ public class FiremenView {
             g2.clearRect(0, 0, this.getWidth(), this.getHeight());
 
             for (int i = 0; i < n; i++) {
-                g2.drawOval(25, 25 + 25 * i, 20, 20);
+                g2.setColor(Color.magenta);
+                g2.fillOval(25, 25 + 25 * i, 20, 20);
             }
 
         }
