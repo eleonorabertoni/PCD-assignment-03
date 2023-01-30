@@ -9,7 +9,6 @@ object API:
   case class Measure(rainLevel: Double) extends API with Message
   case class Decide(value: Double, ref: ActorRef[API]) extends API with Message
   case class Alarm(values: Seq[Double]) extends API with Message
-  case class Start(v: Double, state: STATE) extends API with Message
   case class MsgSensor(n: Int) extends API with Message // to send the view the number of sensors
   case class Msg(info: String) extends API with Message // to send the station state or the zone state
   case class Stop() extends API with Message // to disable the alarm in a zone

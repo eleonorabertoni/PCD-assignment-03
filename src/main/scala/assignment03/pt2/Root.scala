@@ -18,19 +18,20 @@ import scala.util.Random
 object Root:
 
   val SensorsServiceKeyZone0: ServiceKey[API] = ServiceKey[API]("StatsService")
-  val HubServiceKeyZone0: ServiceKey[API] = ServiceKey[API]("HubService")
+  val StationServiceKeyZone0: ServiceKey[API] = ServiceKey[API]("StationService")
   val ViewServiceKeyZone0: ServiceKey[API] = ServiceKey[API]("ViewService")
 
   val SensorsServiceKeyZone1: ServiceKey[API] = ServiceKey[API]("StatsService1")
-  val HubServiceKeyZone1: ServiceKey[API] = ServiceKey[API]("HubService1")
+  val StationServiceKeyZone1: ServiceKey[API] = ServiceKey[API]("StationService1")
   val ViewServiceKeyZone1: ServiceKey[API] = ServiceKey[API]("ViewService1")
 
   /**
    * Factory for RainSensor
    */
-  def apply(pos: P2d, simPred: (Double, Option[Iterator[Double]])=> Double, it: Option[Iterator[Double]], i: Int, sensorsServiceKey: ServiceKey[API], hubServiceKey: ServiceKey[API]): Behavior[API | Receptionist.Listing] =
+  def apply(pos: P2d, simPred: (Double, Option[Iterator[Double]])=> Double, it: Option[Iterator[Double]], i: Int, sensorsServiceKey: ServiceKey[API], stationServiceKey: ServiceKey[API]): Behavior[API | Receptionist.Listing] =
+    // It spawns the rain sensor actor and it registers it to the service to notify the subscribed actors when it spawns or dies
     Behaviors.setup { ctx =>
-    val rainSensor = ctx.spawn(RainSensorActor(pos, PERIOD, THRESHOLD, simPred, it, sensorsServiceKey, hubServiceKey).createRainSensorBehavior(0), "backend" + i)
+    val rainSensor = ctx.spawn(RainSensorActor(pos, PERIOD, THRESHOLD, simPred, it, sensorsServiceKey, stationServiceKey).createRainSensorBehavior(0), "backend" + i)
     ctx.system.receptionist ! Receptionist.Register(sensorsServiceKey, rainSensor)
     Behaviors.empty
   }
@@ -39,10 +40,11 @@ object Root:
    * Factory for stations
    *
    */
-  def apply(pos: P2d, i: Int, hubServiceKey: ServiceKey[API], viewServiceKey: ServiceKey[API], sensorsServiceKey: ServiceKey[API]): Behavior[API] =
+  def apply(pos: P2d, i: Int, stationServiceKey: ServiceKey[API], viewServiceKey: ServiceKey[API], sensorsServiceKey: ServiceKey[API]): Behavior[API] =
+    // It spawns the station actor and it registers it to the service to notify the subscribed actors when it spawns or dies
     Behaviors.setup { ctx =>
-      val hub = ctx.spawn(StationActor(pos, sensorsServiceKey, viewServiceKey).createHubBehavior, "hub" + i)
-      ctx.system.receptionist ! Receptionist.Register(hubServiceKey, hub)
+      val hub = ctx.spawn(StationActor(pos, sensorsServiceKey, viewServiceKey).createHubBehavior, "station" + i)
+      ctx.system.receptionist ! Receptionist.Register(stationServiceKey, hub)
       Behaviors.empty
     }
 
@@ -50,9 +52,11 @@ object Root:
    * Factory for viewer
    *
    */
-  def apply(view: FiremenView, viewServiceKey: ServiceKey[API], hubServiceKey: ServiceKey[API]): Behavior[API] =
+  def apply(view: FiremenView, viewServiceKey: ServiceKey[API], stationServiceKey: ServiceKey[API]): Behavior[API] =
+    // It spawns the view actor and it registers it to the service to notify the subscribed actors when it spawns or dies
     Behaviors.setup{ ctx =>
-      val viewer = ctx.spawn(Viewer(view, hubServiceKey), "viewer")
+      val viewer = ctx.spawn(Viewer(view, stationServiceKey), "viewer")
+      // it sets the button handler
       view.setDisableButton(a => {viewer ! API.Stop()})
       ctx.system.receptionist ! Receptionist.Register(viewServiceKey, viewer)
       Behaviors.same

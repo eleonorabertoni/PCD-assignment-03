@@ -16,7 +16,7 @@ trait RainSensorActor
 
 object RainSensorActor:
 
-  def apply(pos:P2d, period: FiniteDuration, threshold: Double, simPred: (Double, Option[Iterator[Double]]) => Double, iterator: Option[Iterator[Double]], sensorsServiceKey: ServiceKey[API], hubServiceKey: ServiceKey[API]) = RainSensorActorImpl(pos, period, threshold, simPred, iterator, sensorsServiceKey, hubServiceKey)
+  def apply(pos:P2d, period: FiniteDuration, threshold: Double, simPred: (Double, Option[Iterator[Double]]) => Double, iterator: Option[Iterator[Double]], sensorsServiceKey: ServiceKey[API], stationServiceKey: ServiceKey[API]) = RainSensorActorImpl(pos, period, threshold, simPred, iterator, sensorsServiceKey, stationServiceKey)
 
   /** To simulate a sensor that measure increasing values **/
   def simulationIncrement(inc: Double): (Double, Option[Iterator[Double]]) => Double =
@@ -51,13 +51,8 @@ object RainSensorActor:
           
           /** Timers are needed to simulate a periodic measurement**/
           Behaviors.withTimers { timers =>
-            timers.startSingleTimer(Start(0, SAMPLING), period)
+            timers.startSingleTimer(Measure(simPred(0, it)), period)
             Behaviors.receiveMessage {
-              // to restart the sensor from the beginning
-              case Start(v, state) =>
-                data = Data().copy(lastValue = v, state = state)
-                timers.startSingleTimer(Measure(simPred(v, it)), period)
-                Behaviors.same
               // if the sensor is not in alarm state and it surpass the threshold 
               // it tells itself and the others to take a decision
               case Measure(l) if data.state == SAMPLING && l > THRESHOLD =>
@@ -81,20 +76,16 @@ object RainSensorActor:
                   println("Global Alarm")
                   if station.nonEmpty then station.get ! Alarm(data.values)
                   data = data.copy(state = ALARM)
-                // otherwise
-                else
-                  // if it is no the one that started the decision it does nothing
-                  // if it is the one that started the decision its local state is ALARM (it has surpassed the threshold) and keeps going
-                  if (ref == ctx.self)
-                    println("LOCAL ALARM ")
-                    data = data.copy(state = ALARM)
-                    timers.startSingleTimer(Measure(simPred(data.lastValue, it)), period)
+                // if it is not the one that started the decision it does nothing
+                // if it is the one that started the decision its local state is ALARM (it has surpassed the threshold) and keeps going
+                if (ref == ctx.self)
+                  println("LOCAL ALARM ")
+                  data = data.copy(state = ALARM)
+                  timers.startSingleTimer(Measure(simPred(data.lastValue, it)), period)
                Behaviors.same
               // it means the station is solving the problem so the sensor state changes
               case Msg("SOLVING") =>
                 data = data.copy(state = SOLVING)
-                timers.cancelAll()
-                timers.startSingleTimer(Measure(simPred(data.lastValue, it)), period)  //TODO maybe it is useless
                 println("DATA" + data)
                 Behaviors.same
               // it means the station has solved the problem so the sensor state changes
@@ -102,14 +93,15 @@ object RainSensorActor:
               case Msg("SAMPLING") =>
                 println("RESTART")
                 timers.cancelAll()
-                ctx.self ! Start(0, SAMPLING) // TODO
+                data = Data()
+                timers.startSingleTimer(Measure(simPred(0, it)), period)
                 Behaviors.same
               // if a sensor spawns or dies it updates its local list and starts a decision 
               // Ex. We have two sensors and a sensor (under the threshold) dies when another sensor is in local alarm it notifies the alarm  
               case sensorsServiceKey.Listing(listing) if others.size != listing.size =>
                 others = listing
                 if (data.values.count(v => v > THRESHOLD) > others.size / 2)
-                  println("GLOBAL ALARM, THE NUMBER OF SENSORS HAS CHANGED") //TODO 
+                  println("GLOBAL ALARM, THE NUMBER OF SENSORS HAS CHANGED")
                   if (station.nonEmpty)
                     station.get ! Alarm(data.values)
                   data = data.copy(state = ALARM)
