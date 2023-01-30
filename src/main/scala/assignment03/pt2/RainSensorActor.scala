@@ -2,7 +2,7 @@ package assignment03.pt2
 
 import akka.actor.typed.receptionist.{Receptionist, ServiceKey}
 import akka.actor.typed.{ActorRef, Behavior}
-import akka.actor.typed.scaladsl.Behaviors
+import akka.actor.typed.scaladsl.{Behaviors, LoggerOps}
 import assignment03.pt1.main.P2d.P2d
 import assignment03.pt2.API
 import assignment03.pt2.API.*
@@ -48,41 +48,48 @@ object RainSensorActor:
           var station: Option[ActorRef[API]] = None
           var others: Set[ActorRef[API]] = Set()
           var data = Data()
+          var count = 0
           
           /** Timers are needed to simulate a periodic measurement**/
           Behaviors.withTimers { timers =>
             timers.startSingleTimer(Measure(simPred(0, it)), period)
             Behaviors.receiveMessage {
-              // if the sensor is not in alarm state and it surpass the threshold 
-              // it tells itself and the others to take a decision
+              // if the sensor is ok and it surpass the threshold
+              // it notifies the update and tells itself and the others to take a decision
               case Measure(l) if data.state == SAMPLING && l > THRESHOLD =>
-                println("THRESHOLD " + l)
-                data = data.copy(lastValue = l)
+                println("THRESHOLD "+l)
                 for o <- others do o ! Decide(l, ctx.self)
+                data = data.copy(lastValue = l, state = LOCAL_ALARM)
+                timers.startSingleTimer(Measure(simPred(l, it)), period)
                 Behaviors.same
-              // it keeps going 
+              // if the sensor is in local alarm state and it returns under the threshold
+              // it notifies the update and tells itself and the others to take a decision
+              case Measure(l) if data.state == LOCAL_ALARM && l <= THRESHOLD =>
+                println("UNDER THRESHOLD "+l)
+                for o <- others do o ! Decide(l, ctx.self)
+                data = data.copy(lastValue = l, state = SAMPLING)
+                timers.startSingleTimer(Measure(simPred(l, it)), period)
+                Behaviors.same
+              // it keeps going
               case Measure(l) =>
-                 if l > THRESHOLD then println("STILL THRESHOLD " + l) else println("OK " + l)
-                 data = data.copy(lastValue = l)
-                 timers.startSingleTimer(Measure(simPred(l, it)), period)
-                 Behaviors.same
-              // to take a decision it saves the values and calls the decision algorithm (majority)
-              case Decide(v, ref) =>
-                println("I am "+ ctx.self + "I received "+ v + " from "+ ref)
-                data = data.copy(values = v +: data.values)
-                println("My values "+data.values)
-                // if the majority surpass the threshold the alarm is global, its local state is ALARM and it notifies the station
-                if (data.values.count(v => v > THRESHOLD) > others.size / 2)
-                  println("Global Alarm")
-                  if station.nonEmpty then station.get ! Alarm(data.values)
-                  data = data.copy(state = ALARM)
-                // if it is not the one that started the decision it does nothing
-                // if it is the one that started the decision its local state is ALARM (it has surpassed the threshold) and keeps going
-                if (ref == ctx.self)
-                  println("LOCAL ALARM ")
-                  data = data.copy(state = ALARM)
-                  timers.startSingleTimer(Measure(simPred(data.lastValue, it)), period)
-               Behaviors.same
+                println("MISURA"+l)
+                data = data.copy(lastValue = l)
+                timers.startSingleTimer(Measure(simPred(l, it)), period)
+                Behaviors.same
+              // to take a decision it saves the count of sensors that have surpassed the threshold
+              case Decide(v,_) =>
+                // it updates count according to the value received
+                if v > threshold then count = count + 1 else count = count - 1
+                // majority is reached, it notifies the station and the sensors
+                if count > others.size / 2 then
+                  count = 0
+                  station.get ! Alarm(data.values)
+                  for o <- others do o ! Alarm(Seq())
+                Behaviors.same
+              // it means the alarm is global
+              case Alarm(_) =>
+                data = data.copy(state = GLOBAL_ALARM)
+                Behaviors.same
               // it means the station is solving the problem so the sensor state changes
               case Msg("SOLVING") =>
                 data = data.copy(state = SOLVING)
@@ -97,14 +104,18 @@ object RainSensorActor:
                 timers.startSingleTimer(Measure(simPred(0, it)), period)
                 Behaviors.same
               // if a sensor spawns or dies it updates its local list and starts a decision 
-              // Ex. We have two sensors and a sensor (under the threshold) dies when another sensor is in local alarm it notifies the alarm  
+              // Ex. We have two sensors and a sensor (under the threshold) dies when another sensor is in local alarm it notifies the alarm and it
+              // prevents blocking
               case sensorsServiceKey.Listing(listing) if others.size != listing.size =>
                 others = listing
-                if (data.values.count(v => v > THRESHOLD) > others.size / 2)
+                println("CHANGE")
+                println(count)
+                println(others.size / 2)
+                if (count > others.size / 2)
                   println("GLOBAL ALARM, THE NUMBER OF SENSORS HAS CHANGED")
-                  if (station.nonEmpty)
-                    station.get ! Alarm(data.values)
-                  data = data.copy(state = ALARM)
+                  station.get ! Alarm(data.values)
+                  count = 0
+                  for o <- others do o ! Alarm(Seq())
                 Behaviors.same
               // if the station spawns or dies it updates its local station
               case hubServiceKey.Listing(listing) if listing.nonEmpty =>

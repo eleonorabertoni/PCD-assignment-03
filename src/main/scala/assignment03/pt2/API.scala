@@ -15,7 +15,7 @@ object API:
 
   /** Zone and Sensor state **/
   enum STATE:
-    case SAMPLING, ALARM, SOLVING
+    case SAMPLING, LOCAL_ALARM, GLOBAL_ALARM, SOLVING
   
   /** Fire Station state **/
   enum STATION_STATE:

@@ -60,7 +60,7 @@ object StationActor:
           case Alarm(msg) if stationState == FREE =>
             // updates its state and the gui
             stationState = OCCUPIED
-            zoneState = ALARM
+            zoneState = GLOBAL_ALARM
             if viewService != null then
               viewService ! Msg(stationState.toString)
               viewService ! Msg(zoneState.toString)
