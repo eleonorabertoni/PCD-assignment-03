@@ -21,6 +21,14 @@ object RainSensorActor:
   /** To simulate a sensor that measure increasing values **/
   def simulationIncrement(inc: Double): (Double, Option[Iterator[Double]]) => Double =
     (n, it) => if it.nonEmpty then n + it.get.next() + inc else n + inc
+
+  def simulationIncrementAndReset(inc: Double): (Double, Option[Iterator[Double]]) => Double =
+    var num: Double = 0
+    (n, it) =>
+      if it.nonEmpty then num = n + it.get.next() + inc else num = n + inc
+      if num >= 50 then num = num / 10
+    num
+
   
   /** To simulate a sensor that measure oscillating values, likely it does not surpass the threshold **/
   def simulationOscillation(rand: Random, num: Int): (Double, Option[Iterator[Double]]) => Double =
