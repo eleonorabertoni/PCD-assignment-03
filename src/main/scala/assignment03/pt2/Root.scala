@@ -31,7 +31,7 @@ object Root:
   def apply(pos: P2d, simPred: (Double, Option[Iterator[Double]])=> Double, it: Option[Iterator[Double]], i: Int, sensorsServiceKey: ServiceKey[API], stationServiceKey: ServiceKey[API]): Behavior[API | Receptionist.Listing] =
     // It spawns the rain sensor actor and it registers it to the service to notify the subscribed actors when it spawns or dies
     Behaviors.setup { ctx =>
-    val rainSensor = ctx.spawn(RainSensorActor(pos, PERIOD, THRESHOLD, simPred, it, sensorsServiceKey, stationServiceKey).createRainSensorBehavior(0), "backend" + i)
+    val rainSensor = ctx.spawn(RainSensorActor(pos, PERIOD, THRESHOLD, simPred, it, sensorsServiceKey, stationServiceKey).createRainSensorBehavior(0), "sensor" + i)
     ctx.system.receptionist ! Receptionist.Register(sensorsServiceKey, rainSensor)
     Behaviors.empty
   }
@@ -43,8 +43,8 @@ object Root:
   def apply(pos: P2d, i: Int, stationServiceKey: ServiceKey[API], viewServiceKey: ServiceKey[API], sensorsServiceKey: ServiceKey[API]): Behavior[API] =
     // It spawns the station actor and it registers it to the service to notify the subscribed actors when it spawns or dies
     Behaviors.setup { ctx =>
-      val hub = ctx.spawn(StationActor(pos, sensorsServiceKey, viewServiceKey).createHubBehavior, "station" + i)
-      ctx.system.receptionist ! Receptionist.Register(stationServiceKey, hub)
+      val station = ctx.spawn(StationActor(pos, sensorsServiceKey, viewServiceKey).createStationBehavior, "station" + i)
+      ctx.system.receptionist ! Receptionist.Register(stationServiceKey, station)
       Behaviors.empty
     }
 

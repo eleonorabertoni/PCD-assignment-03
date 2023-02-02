@@ -28,13 +28,12 @@ object RainSensorActor:
       if it.nonEmpty then num = n + it.get.next() + inc else num = n + inc
       if num >= 50 then num = num / 10
     num
-
   
   /** To simulate a sensor that measure oscillating values, likely it does not surpass the threshold **/
   def simulationOscillation(rand: Random, num: Int): (Double, Option[Iterator[Double]]) => Double =
     (n, it) => if it.nonEmpty then n + it.get.next() * rand.nextInt(num).toDouble else n + rand.nextInt(num)
   
-  class RainSensorActorImpl(pos: P2d, period: FiniteDuration, threshold: Double, simPred: (Double, Option[Iterator[Double]]) => Double, it: Option[Iterator[Double]], sensorsServiceKey: ServiceKey[API], hubServiceKey: ServiceKey[API]) extends RainSensorActor:
+  class RainSensorActorImpl(pos: P2d, period: FiniteDuration, threshold: Double, simPred: (Double, Option[Iterator[Double]]) => Double, it: Option[Iterator[Double]], sensorsServiceKey: ServiceKey[API], stationServiceKey: ServiceKey[API]) extends RainSensorActor:
       def createRainSensorBehavior(start: Double): Behavior[API | Receptionist.Listing] =
         Behaviors.setup[API | Receptionist.Listing] { ctx =>
 
@@ -45,7 +44,7 @@ object RainSensorActor:
           ctx.spawnAnonymous[Receptionist.Listing] {
             Behaviors.setup { internal =>
               internal.system.receptionist ! Receptionist.Subscribe(sensorsServiceKey, internal.self)
-              internal.system.receptionist ! Receptionist.Subscribe(hubServiceKey, internal.self)
+              internal.system.receptionist ! Receptionist.Subscribe(stationServiceKey, internal.self)
               Behaviors.receiveMessage {
                 case msg: Receptionist.Listing =>
                   ctx.self ! msg
@@ -57,7 +56,7 @@ object RainSensorActor:
           var others: Set[ActorRef[API]] = Set()
           var data = Data()
           var count = 0
-          
+
           /** Timers are needed to simulate a periodic measurement**/
           Behaviors.withTimers { timers =>
             timers.startSingleTimer(Measure(simPred(0, it)), period)
@@ -111,7 +110,7 @@ object RainSensorActor:
                 data = Data()
                 timers.startSingleTimer(Measure(simPred(0, it)), period)
                 Behaviors.same
-              // if a sensor spawns or dies it updates its local list and starts a decision 
+              // if a sensor spawns or dies it updates its local list and starts a decision
               // Ex. We have two sensors and a sensor (under the threshold) dies when another sensor is in local alarm it notifies the alarm and it
               // prevents blocking
               case sensorsServiceKey.Listing(listing) if others.size != listing.size =>
@@ -126,7 +125,7 @@ object RainSensorActor:
                   for o <- others do o ! Alarm(Seq())
                 Behaviors.same
               // if the station spawns or dies it updates its local station
-              case hubServiceKey.Listing(listing) if listing.nonEmpty =>
+              case stationServiceKey.Listing(listing) if listing.nonEmpty =>
                 station = Some(listing.head)
                 Behaviors.same
               // it discards the other messages

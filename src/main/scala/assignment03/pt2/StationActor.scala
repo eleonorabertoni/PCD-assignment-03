@@ -12,7 +12,7 @@ import concurrent.duration.FiniteDuration
 import concurrent.duration.DurationInt
 
 trait StationActor:
-  def createHubBehavior: Behavior[API | Receptionist.Listing]
+  def createStationBehavior: Behavior[API | Receptionist.Listing]
 
 object StationActor:
 
@@ -20,7 +20,7 @@ object StationActor:
 
   class StationActorImpl(pos: P2d, sensorsServiceKey: ServiceKey[API], viewServiceKey: ServiceKey[API]) extends StationActor:
 
-    override def createHubBehavior: Behavior[API | Receptionist.Listing] =
+    override def createStationBehavior: Behavior[API | Receptionist.Listing] =
       Behaviors.setup[API | Receptionist.Listing] { ctx =>
 
         /**
