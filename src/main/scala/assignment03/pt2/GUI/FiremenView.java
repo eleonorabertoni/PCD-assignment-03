@@ -3,6 +3,9 @@ package assignment03.pt2.GUI;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Random;
 
 /**
  * Simulation view
@@ -20,8 +23,8 @@ public class FiremenView {
      * @param w
      * @param h
      */
-    public FiremenView(int w, int h, String zone) {
-        frame = new VisualiserFrame(w, h, zone);
+    public FiremenView(int w, int h, String zone, int maxSensor) {
+        frame = new VisualiserFrame(w, h, zone, maxSensor);
     }
 
     public void display(int n) {
@@ -47,10 +50,10 @@ public class FiremenView {
         private final VisualiserPanel canvasPanel;
 
 
-        public ZonePanel(String s) {
+        public ZonePanel(String s, int maxSensor) {
             JPanel componentPanel = new JPanel();
             componentPanel.setLayout(new BoxLayout(componentPanel, BoxLayout.Y_AXIS));
-            canvasPanel = new VisualiserPanel(getWidth(), getHeight() / 2);
+            canvasPanel = new VisualiserPanel(getWidth(), getHeight() / 2, maxSensor);
 
             this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
@@ -99,12 +102,12 @@ public class FiremenView {
 
         private static ZonePanel panel;
 
-        public VisualiserFrame(int w, int h, String zone) {
+        public VisualiserFrame(int w, int h, String zone, int maxSensor) {
 
             setSize(w, h);
             setResizable(false);
             
-            panel = new ZonePanel(zone);
+            panel = new ZonePanel(zone, maxSensor);
             getContentPane().add(panel);
 
             getContentPane().setLayout(new BoxLayout(this.getContentPane(), BoxLayout.X_AXIS));
@@ -149,12 +152,18 @@ public class FiremenView {
     public static class VisualiserPanel extends JPanel {
 
         private int n ;
+        private List<Integer> posValues = new LinkedList<>();
 
-        public VisualiserPanel(int w, int h) {
+        public VisualiserPanel(int w, int h, int maxSensor) {
             setSize(w, h);
             setFocusable(true);
             setFocusTraversalKeysEnabled(false);
             requestFocusInWindow();
+
+            Random rand = new Random();
+            for (int i = 0; i < maxSensor; i++){
+                posValues.add(rand.nextInt(i*i + 50));
+            }
         }
 
         public void paint(Graphics g) {
@@ -168,7 +177,7 @@ public class FiremenView {
 
             for (int i = 0; i < n; i++) {
                 g2.setColor(Color.magenta);
-                g2.fillOval(25, 25 + 25 * i, 20, 20);
+                g2.fillOval(25 + posValues.get(i) * i, 25 + 25 * i, 20, 20);
             }
 
         }
