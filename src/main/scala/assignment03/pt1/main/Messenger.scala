@@ -29,7 +29,6 @@ object Messenger:
       Behaviors.same
 
     case (ctx, API.Msg(STOP, _, _)) =>
-      println("boh")
       Behaviors.stopped
 
   }

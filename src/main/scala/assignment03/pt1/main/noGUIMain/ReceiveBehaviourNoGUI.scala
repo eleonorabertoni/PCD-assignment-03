@@ -15,6 +15,8 @@ object ReceiveBehaviourNoGUI:
     val N_ACTORS: Int = actors.size
 
     def behaviourReceive(): Behaviors.Receive[API] =
+      val t0 = System.currentTimeMillis()
+      ctx.log.info(s"$t0")
       var data = IterationData(DT)
       var bodies = initialBodies
       var startRequest = false
@@ -50,8 +52,12 @@ object ReceiveBehaviourNoGUI:
                 for a <- actors do a ! API.Msg(VEL, bodies, ctx.self)
             else
               for a <- actors do a ! API.Msg(STOP, Array(), ctx.self)
+              val t1 = System.currentTimeMillis()
+              val elapsed = t1 - t0
+              ctx.log.info(s"$t1")
+              ctx.log.info(s"elapsed $elapsed")
+              Behaviors.stopped
               println("fine")
-              //Behaviors.stopped
           behaviour
       }
 

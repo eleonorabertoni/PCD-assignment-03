@@ -15,8 +15,6 @@ object ReceiveBehaviour:
     val N_ACTORS: Int = actors.size
 
     def behaviourReceive(): Behaviors.Receive[API] =
-      val t0 = System.currentTimeMillis()
-      ctx.log.info(s"$t0")
       var data = IterationData(DT)
       var bodies = initialBodies
       var startRequest = false
@@ -47,10 +45,6 @@ object ReceiveBehaviour:
               else
                 viewer ! API.UpdateGUI(data.vt, data.currentIteration, bodies, bounds, ctx.self)
             else
-              val t1 = System.currentTimeMillis()
-              val elapsed = t1 - t0
-              ctx.log.info(s"$t1")
-              ctx.log.info(s"$elapsed")
               Behaviors.stopped
           behaviour
         case API.Stop =>
